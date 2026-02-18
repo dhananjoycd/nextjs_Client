@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<User> => {
     const payload = await apiRequest<{ accessToken?: string; token?: string; user?: User }>(
-      "/api/auth/login",
+      "/api/v1/auth/login",
       {
         method: "POST",
         body: JSON.stringify({ email, password }),
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
     const accessToken = payload.accessToken ?? payload.token;
     if (!accessToken) throw new Error("No auth token returned from API");
-    const nextUser = payload.user ?? (await apiRequest<User>("/api/auth/me", { token: accessToken }));
+    const nextUser = payload.user ?? (await apiRequest<User>("/api/v1/auth/me", { token: accessToken }));
     setToken(accessToken);
     localStorage.setItem(TOKEN_KEY, accessToken);
     setUser(nextUser);
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (payload: RegisterPayload) => {
-    await apiRequest("/api/auth/register", {
+    await apiRequest("/api/v1/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshMe = useCallback(async () => {
     if (!token) return;
     try {
-      const me = await apiRequest<User>("/api/auth/me", { token });
+      const me = await apiRequest<User>("/api/v1/auth/me", { token });
       setUser(me);
       localStorage.setItem(USER_KEY, JSON.stringify(me));
     } catch {

@@ -19,7 +19,7 @@ export default function TestPage() {
     try {
       setLoading(true);
       setError("");
-      const data = await apiRequest<Meal[]>("/api/meals");
+      const data = await apiRequest<Meal[]>("/api/v1/meals");
       setMeals(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
@@ -33,7 +33,7 @@ export default function TestPage() {
     <div className="card space-y-4">
       <h1 className="text-2xl">API Test Page</h1>
       <p className="text-sm text-slate-600">
-        Click the button to test `GET /api/meals` using `lib/api.ts`.
+        Click the button to test `GET /api/v1/meals` using `lib/api.ts`.
       </p>
 
       <button className="btn btn-primary" onClick={runTest} disabled={loading}>
@@ -57,4 +57,3 @@ export default function TestPage() {
     </div>
   );
 }
-

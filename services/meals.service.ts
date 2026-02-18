@@ -3,10 +3,9 @@ import type { Meal } from "@/types";
 
 export const mealsService = {
   list(query = "") {
-    return apiRequest<Meal[]>(`/api/meals${query ? `?${query}` : ""}`);
+    return apiRequest<Meal[]>(`/api/v1/meals${query ? `?${query}` : ""}`);
   },
   details(id: string) {
-    return apiRequest<Meal>(`/api/meals/${id}`);
+    return apiRequest<Meal>(`/api/v1/meals/${id}`);
   },
 };
-

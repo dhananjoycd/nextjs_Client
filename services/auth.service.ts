@@ -14,13 +14,13 @@ export const authService = {
     password: string;
     role: string;
   }) {
-    return apiRequest("api/v1/auth/register", {
+    return apiRequest("/api/v1/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   },
   login(payload: { email: string; password: string }) {
-    return apiRequest<LoginResponse>("api/v1/auth/login", {
+    return apiRequest<LoginResponse>("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify(payload),
     });

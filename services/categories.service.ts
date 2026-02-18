@@ -3,7 +3,6 @@ import type { Category } from "@/types";
 
 export const categoriesService = {
   list() {
-    return apiRequest<Category[]>("/api/categories");
+    return apiRequest<Category[]>("/api/v1/categories");
   },
 };
-

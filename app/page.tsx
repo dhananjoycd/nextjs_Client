@@ -8,7 +8,7 @@ const categories = ["Bangla", "Fast Food", "Chinese", "Healthy", "Desserts", "Dr
 
 async function getFeaturedMeals(): Promise<Meal[]> {
   try {
-    const response = await fetch(`${config.apiBaseUrl}/api/meals?featured=true`, {
+    const response = await fetch(`${config.apiBaseUrl}/api/v1/meals?featured=true`, {
       next: { revalidate: 120 },
     });
     if (!response.ok) return [];
@@ -24,7 +24,7 @@ async function getFeaturedMeals(): Promise<Meal[]> {
 
 async function getTopProviders(): Promise<Provider[]> {
   try {
-    const response = await fetch(`${config.apiBaseUrl}/api/providers`, {
+    const response = await fetch(`${config.apiBaseUrl}/api/v1/providers`, {
       next: { revalidate: 180 },
     });
     if (!response.ok) return [];
@@ -171,4 +171,3 @@ export default async function HomePage() {
     </div>
   );
 }
-

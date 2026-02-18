@@ -17,7 +17,7 @@ export default function ProvidersPage() {
   async function fetchProviders() {
     try {
       setLoading(true);
-      const data = await apiRequest<Provider[]>("/api/providers");
+      const data = await apiRequest<Provider[]>("/api/v1/providers");
       setProviders(data);
       setError("");
     } catch (err) {
@@ -46,4 +46,3 @@ export default function ProvidersPage() {
     </div>
   );
 }
-

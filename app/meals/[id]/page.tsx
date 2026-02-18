@@ -24,7 +24,7 @@ export default function MealDetailsPage() {
   const fetchMeal = useCallback(async () => {
     try {
       setError("");
-      const data = await apiRequest<Meal>(`/api/meals/${params.id}`);
+      const data = await apiRequest<Meal>(`/api/v1/meals/${params.id}`);
       setMeal(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load meal");
@@ -33,7 +33,7 @@ export default function MealDetailsPage() {
 
   const fetchRelatedPool = useCallback(async () => {
     try {
-      const data = await apiRequest<Meal[]>("/api/meals");
+      const data = await apiRequest<Meal[]>("/api/v1/meals");
       setAllMeals(Array.isArray(data) ? data : []);
     } catch {
       setAllMeals([]);

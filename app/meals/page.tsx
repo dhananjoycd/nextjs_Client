@@ -39,7 +39,7 @@ export default function MealsPage() {
     try {
       setLoading(true);
       setError("");
-      const data = await apiRequest<Meal[]>("/api/meals");
+      const data = await apiRequest<Meal[]>("/api/v1/meals");
       setAllMeals(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load meals");
@@ -47,6 +47,9 @@ export default function MealsPage() {
       setLoading(false);
     }
   }, []);
+
+  console.log(fetchMeals, "meeeeeeels");
+  
 
   useEffect(() => {
     void fetchMeals();
@@ -226,4 +229,3 @@ export default function MealsPage() {
     </div>
   );
 }
-

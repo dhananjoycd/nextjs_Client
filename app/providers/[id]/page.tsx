@@ -16,7 +16,7 @@ export default function ProviderPage() {
 
   const fetchProvider = useCallback(async () => {
     try {
-      const data = await apiRequest<Provider>(`/api/providers/${params.id}`);
+      const data = await apiRequest<Provider>(`/api/v1/providers/${params.id}`);
       setProvider(data);
       setError("");
     } catch (err) {
