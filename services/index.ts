@@ -4,4 +4,7 @@ export * from "@/services/providers.service";
 export * from "@/services/orders.service";
 export * from "@/services/admin.service";
 export * from "@/services/categories.service";
-
+export * from "@/services/cart.service";
+export * from "@/services/user.service";
+export * from "@/services/payments.service";
+export * from "@/services/reviews.service";

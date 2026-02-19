@@ -34,10 +34,12 @@ export default function ProvidersPage() {
       {error && <p className="text-red-600">{error}</p>}
       <div className="grid-cards">
         {providers.map((provider) => (
-          <article className="card" key={provider.id}>
-            <h2 className="text-xl">{provider.name ?? provider.user?.name ?? "Provider"}</h2>
-            <p className="text-sm text-slate-600">{provider.bio ?? "No bio added yet."}</p>
-            <Link className="btn btn-secondary mt-3 inline-block" href={`/providers/${provider.id}`}>
+          <article className="card" key={provider.user?.id ?? provider.id}>
+            <h2 className="text-xl">
+              {provider.restaurantName ?? provider.name ?? provider.user?.name ?? "Provider"}
+            </h2>
+            <p className="text-sm text-slate-600">{provider.description ?? provider.bio ?? "No bio added yet."}</p>
+            <Link className="btn btn-secondary mt-3 inline-block" href={`/providers/${provider.user?.id ?? provider.id}`}>
               View Menu
             </Link>
           </article>

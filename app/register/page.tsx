@@ -1,122 +1,156 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "@tanstack/react-form";
+import { Loader2, Lock, Mail, User } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
+import { Button, Card, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { getRoleHomePath } from "@/lib/auth";
 
 export default function RegisterPage() {
   const { register, user } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "CUSTOMER",
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (!user) return;
     router.replace(getRoleHomePath(user.role));
-  }, [user, router]);
+  }, [router, user]);
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!form.name || !form.email || !form.password) {
-      setError("Name, email and password are required");
-      return;
-    }
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-      setSuccess("");
-      await register(form);
-      setSuccess("Registration successful. Please login.");
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "CUSTOMER",
+    },
+    onSubmit: async ({ value }) => {
+      await register(value);
+      toast.success("Registration successful. Please login.");
       router.push("/login");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+  });
 
   return (
-    <div className="mx-auto max-w-md card">
-      <h1 className="mb-4 text-2xl">Register</h1>
-      <form className="space-y-3" onSubmit={onSubmit}>
-        <input
-          className="field"
-          placeholder="Full name"
-          value={form.name}
-          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-        />
-        <input
-          className="field"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-        />
-        <input
-          className="field"
-          placeholder="Password"
-          type={showPassword ? "text" : "password"}
-          value={form.password}
-          onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-        />
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
-          Show password
-        </label>
-
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Choose role</p>
-          <div className="flex gap-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="role"
-                value="CUSTOMER"
-                checked={form.role === "CUSTOMER"}
-                onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}
-              />
-              Customer
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="role"
-                value="PROVIDER"
-                checked={form.role === "PROVIDER"}
-                onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}
-              />
-              Provider
-            </label>
-          </div>
+    <div className="mx-auto max-w-md py-8">
+      <Card className="space-y-5 border-slate-200 bg-white/95 p-6">
+        <div>
+          <h1 className="text-3xl">Create account</h1>
+          <p className="text-sm text-slate-600">Start ordering or become a provider on FoodHub.</p>
         </div>
 
-        <button className="btn btn-primary w-full" disabled={loading}>
-          {loading ? "Creating account..." : "Create Account"}
-        </button>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {success && <p className="text-sm text-teal-700">{success}</p>}
-      </form>
-      <p className="mt-3 text-sm text-slate-600">
-        Already have an account?{" "}
-        <Link className="text-teal-700 underline" href="/login">
-          Login
-        </Link>
-      </p>
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            form.handleSubmit().catch((error) =>
+              toast.error(error instanceof Error ? error.message : "Registration failed"),
+            );
+          }}
+        >
+          <form.Field
+            name="name"
+            validators={{ onChange: ({ value }) => (!value ? "Full name is required" : undefined) }}
+          >
+            {(field) => (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Full name</label>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
+                  <Input
+                    className="pl-9"
+                    placeholder="John Doe"
+                    value={field.state.value}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                  />
+                </div>
+                {field.state.meta.errors[0] && <p className="text-xs text-rose-600">{field.state.meta.errors[0]}</p>}
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field
+            name="email"
+            validators={{ onChange: ({ value }) => (!value ? "Email is required" : undefined) }}
+          >
+            {(field) => (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Email</label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
+                  <Input
+                    className="pl-9"
+                    placeholder="you@example.com"
+                    value={field.state.value}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                  />
+                </div>
+                {field.state.meta.errors[0] && <p className="text-xs text-rose-600">{field.state.meta.errors[0]}</p>}
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field
+            name="password"
+            validators={{
+              onChange: ({ value }) => (value.length < 6 ? "Password must be at least 6 characters" : undefined),
+            }}
+          >
+            {(field) => (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Password</label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
+                  <Input
+                    className="pl-9"
+                    type="password"
+                    placeholder="Create password"
+                    value={field.state.value}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                  />
+                </div>
+                {field.state.meta.errors[0] && <p className="text-xs text-rose-600">{field.state.meta.errors[0]}</p>}
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field name="role">
+            {(field) => (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Account role</label>
+                <Select value={field.state.value} onValueChange={field.handleChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUSTOMER">Customer</SelectItem>
+                    <SelectItem value="PROVIDER">Provider</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </form.Field>
+
+          <form.Subscribe selector={(state) => ({ isSubmitting: state.isSubmitting })}>
+            {({ isSubmitting }) => (
+              <Button className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                {isSubmitting ? "Creating account..." : "Create account"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </form>
+
+        <p className="text-sm text-slate-600">
+          Already have an account?{" "}
+          <Link href="/login" className="font-semibold text-emerald-700 hover:text-emerald-600">
+            Login
+          </Link>
+        </p>
+      </Card>
     </div>
   );
 }
-

@@ -19,6 +19,26 @@ type FilterState = {
   maxPrice: string;
 };
 
+function normalize(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function toTextList(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => toTextList(item))
+      .filter(Boolean);
+  }
+  if (typeof value === "object") {
+    const maybeRecord = value as Record<string, unknown>;
+    if (typeof maybeRecord.name === "string") return [normalize(maybeRecord.name)];
+    if (typeof maybeRecord.label === "string") return [normalize(maybeRecord.label)];
+    return [];
+  }
+  return [normalize(value)];
+}
+
 export default function MealsPage() {
   const [allMeals, setAllMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,28 +68,56 @@ export default function MealsPage() {
     }
   }, []);
 
-  console.log(fetchMeals, "meeeeeeels");
-  
-
   useEffect(() => {
     void fetchMeals();
   }, [fetchMeals]);
 
   const filtered = useMemo(() => {
-    const min = Number(filters.minPrice || 0);
-    const max = Number(filters.maxPrice || Number.MAX_SAFE_INTEGER);
+    const minCandidate = Number(filters.minPrice);
+    const maxCandidate = Number(filters.maxPrice);
+    const min = Number.isFinite(minCandidate) ? minCandidate : 0;
+    const max = Number.isFinite(maxCandidate) ? maxCandidate : Number.MAX_SAFE_INTEGER;
+    const cuisineQuery = normalize(filters.cuisine);
+    const dietaryQuery = normalize(filters.dietary);
 
     const list = allMeals.filter((meal) => {
-      const name = (meal.name ?? meal.title ?? "").toLowerCase();
-      const category = String(meal.category ?? "").toLowerCase();
-      const description = String(meal.description ?? "").toLowerCase();
-      const provider = String(meal.provider?.name ?? "").toLowerCase();
+      const name = normalize(meal.name ?? meal.title);
+      const category = (
+        typeof meal.category === "string"
+          ? meal.category
+          : (meal.category?.name ?? "")
+      );
+      const description = normalize(meal.description);
+      const provider = normalize(meal.provider?.name);
+      const cuisines = [
+        ...toTextList(meal.cuisine),
+        ...toTextList((meal as Meal & { cuisines?: unknown }).cuisines),
+        ...toTextList((meal as Meal & { provider?: { cuisine?: unknown } }).provider?.cuisine),
+      ];
+      const dietaryPreferences = [
+        ...toTextList(meal.dietary),
+        ...toTextList(meal.dietaryPreferences),
+        ...toTextList((meal as Meal & { dietaryPreference?: unknown }).dietaryPreference),
+        ...toTextList(meal.tags),
+      ];
 
-      if (filters.query && !name.includes(filters.query.toLowerCase())) return false;
-      if (filters.category && category !== filters.category.toLowerCase()) return false;
-      if (filters.cuisine && !description.includes(filters.cuisine.toLowerCase())) return false;
-      if (filters.dietary && !description.includes(filters.dietary.toLowerCase())) return false;
-      if (filters.provider && !provider.includes(filters.provider.toLowerCase())) return false;
+      if (filters.query && !name.includes(normalize(filters.query))) return false;
+      if (filters.category && normalize(category) !== normalize(filters.category)) return false;
+      if (
+        cuisineQuery &&
+        !cuisines.some((value) => value.includes(cuisineQuery)) &&
+        !description.includes(cuisineQuery)
+      ) {
+        return false;
+      }
+      if (
+        dietaryQuery &&
+        !dietaryPreferences.some((value) => value.includes(dietaryQuery)) &&
+        !description.includes(dietaryQuery)
+      ) {
+        return false;
+      }
+      if (filters.provider && !provider.includes(normalize(filters.provider))) return false;
       if (Number(meal.price) < min || Number(meal.price) > max) return false;
       return true;
     });

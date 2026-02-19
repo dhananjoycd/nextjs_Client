@@ -1,65 +1,122 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "@tanstack/react-form";
+import { Loader2, Lock, Mail } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
+import { Button, Card, Input } from "@/components/ui";
 import { getRoleHomePath } from "@/lib/auth";
 
 export default function LoginPage() {
   const { login, user } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    onSubmit: async ({ value }) => {
+      const loggedInUser = await login(value.email, value.password);
+      toast.success("Logged in successfully");
+      router.push(getRoleHomePath(loggedInUser.role));
+    },
+  });
 
   useEffect(() => {
     if (!user) return;
     router.replace(getRoleHomePath(user.role));
-  }, [user, router]);
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!email || !password) {
-      setError("Email and password are required");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-      const loggedInUser = await login(email, password);
-      router.push(getRoleHomePath(loggedInUser.role));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [router, user]);
 
   return (
-    <div className="mx-auto max-w-md card">
-      <h1 className="mb-4 text-2xl">Login</h1>
-      <form className="space-y-3" onSubmit={onSubmit}>
-        <input className="field" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input
-          className="field"
-          placeholder="Password"
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
-          Show password
-        </label>
-        <button className="btn btn-primary w-full" disabled={loading}>
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-      </form>
+    <div className="mx-auto max-w-md py-8">
+      <Card className="space-y-5 border-slate-200 bg-white/95 p-6">
+        <div>
+          <h1 className="text-3xl">Welcome back</h1>
+          <p className="text-sm text-slate-600">Login to continue ordering with FoodHub.</p>
+        </div>
+
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            form.handleSubmit().catch((error) =>
+              toast.error(error instanceof Error ? error.message : "Login failed"),
+            );
+          }}
+        >
+          <form.Field
+            name="email"
+            validators={{
+              onChange: ({ value }) => (!value ? "Email is required" : undefined),
+            }}
+          >
+            {(field) => (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Email</label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
+                  <Input
+                    className="pl-9"
+                    placeholder="you@example.com"
+                    value={field.state.value}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                  />
+                </div>
+                {field.state.meta.errors[0] && (
+                  <p className="text-xs text-rose-600">{field.state.meta.errors[0]}</p>
+                )}
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field
+            name="password"
+            validators={{
+              onChange: ({ value }) => (!value ? "Password is required" : undefined),
+            }}
+          >
+            {(field) => (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Password</label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
+                  <Input
+                    className="pl-9"
+                    type="password"
+                    placeholder="Enter password"
+                    value={field.state.value}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                  />
+                </div>
+                {field.state.meta.errors[0] && (
+                  <p className="text-xs text-rose-600">{field.state.meta.errors[0]}</p>
+                )}
+              </div>
+            )}
+          </form.Field>
+
+          <form.Subscribe selector={(state) => ({ isSubmitting: state.isSubmitting })}>
+            {({ isSubmitting }) => (
+              <Button className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                {isSubmitting ? "Signing in..." : "Sign in"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </form>
+
+        <p className="text-sm text-slate-600">
+          New to FoodHub?{" "}
+          <Link href="/register" className="font-semibold text-emerald-700 hover:text-emerald-600">
+            Create an account
+          </Link>
+        </p>
+      </Card>
     </div>
   );
 }

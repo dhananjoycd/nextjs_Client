@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight, ChefHat, Clock3, ShieldCheck } from "lucide-react";
 import { CategoryCard, MealCard, ProviderCard } from "@/components/home";
 import { Badge, Button, Input } from "@/components/ui";
 import { config } from "@/lib/config";
@@ -13,10 +14,14 @@ async function getFeaturedMeals(): Promise<Meal[]> {
     });
     if (!response.ok) return [];
     const body = (await response.json()) as unknown;
-    if (body && typeof body === "object" && "data" in (body as Record<string, unknown>)) {
-      return ((body as { data?: Meal[] }).data ?? []).slice(0, 6);
+    const raw =
+      body && typeof body === "object" && "data" in (body as Record<string, unknown>)
+        ? (body as { data?: unknown }).data
+        : body;
+    if (raw && typeof raw === "object" && "data" in (raw as Record<string, unknown>)) {
+      return (((raw as { data?: Meal[] }).data ?? []).slice(0, 6) as Meal[]);
     }
-    return (Array.isArray(body) ? body : []).slice(0, 6) as Meal[];
+    return (Array.isArray(raw) ? raw : []).slice(0, 6) as Meal[];
   } catch {
     return [];
   }
@@ -43,128 +48,144 @@ export default async function HomePage() {
   const [featuredMeals, topProviders] = await Promise.all([getFeaturedMeals(), getTopProviders()]);
 
   return (
-    <div className="space-y-12 py-4">
-      <section className="grid items-center gap-6 md:grid-cols-2">
+    <div className="space-y-14 py-3">
+      <section className="fade-up grid items-center gap-8 rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-sm md:grid-cols-2 md:p-10">
         <article className="space-y-5">
-          <Badge className="bg-emerald-100 text-emerald-800">Trusted local providers</Badge>
-          <h1 className="text-4xl leading-tight md:text-5xl">Discover &amp; Order Delicious Meals</h1>
-          <p className="max-w-xl text-slate-700">
-            Browse meals from verified kitchens, place your order in seconds, and track delivery
-            from preparation to doorstep.
+          <Badge className="bg-emerald-100 text-emerald-700">Premium meal ordering platform</Badge>
+          <h1 className="text-4xl leading-tight md:text-5xl">Order Fresh Meals From Trusted Providers</h1>
+          <p className="max-w-xl text-slate-600">
+            FoodHub delivers a modern ordering experience with curated menus, quick checkout, and realtime order
+            tracking.
           </p>
           <form action="/meals" className="flex w-full max-w-md gap-2">
             <Input name="search" placeholder="Search meals or providers..." aria-label="Search meals or providers" />
-            <Button type="submit" variant="outline">
+            <Button type="submit" variant="secondary">
               Search
             </Button>
           </form>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
-              <Link href="/meals">Browse Meals</Link>
+              <Link href="/meals">
+                Browse Meals <ArrowRight className="size-4" />
+              </Link>
             </Button>
-            <Button asChild variant="secondary">
-              <Link href="/register">Become a Provider</Link>
+            <Button asChild variant="outline">
+              <Link href="/providers">Explore Providers</Link>
             </Button>
           </div>
         </article>
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-200/70 via-amber-100 to-orange-200/80 p-8 shadow-xl">
-          <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/50 blur-2xl" />
-          <div className="absolute -bottom-12 -left-10 h-56 w-56 rounded-full bg-emerald-400/25 blur-3xl" />
-          <div className="relative space-y-3 text-slate-800">
-            <p className="text-sm uppercase tracking-[0.2em]">FoodHub</p>
-            <p className="text-2xl font-semibold">Fresh picks delivered every day</p>
-            <p className="text-sm">
-              Healthy bowls, street favorites, premium desserts, and more from the best providers.
-            </p>
+        <div className="hero-blob relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-200/80 via-amber-100 to-orange-200/90 p-8 shadow-xl">
+          <div className="absolute -right-8 -top-8 size-32 rounded-full bg-white/50 blur-xl" />
+          <div className="absolute -bottom-10 -left-10 size-40 rounded-full bg-emerald-400/25 blur-2xl" />
+          <div className="relative space-y-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-700">Fast - Fresh - Reliable</p>
+            <p className="text-2xl font-semibold text-slate-800">From kitchen to doorstep in minutes</p>
+            <div className="grid gap-2 text-sm text-slate-700">
+              <p className="inline-flex items-center gap-2">
+                <ShieldCheck className="size-4 text-emerald-600" /> Verified providers
+              </p>
+              <p className="inline-flex items-center gap-2">
+                <Clock3 className="size-4 text-emerald-600" /> Live order updates
+              </p>
+              <p className="inline-flex items-center gap-2">
+                <ChefHat className="size-4 text-emerald-600" /> Freshly prepared meals
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="fade-up space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl">Categories</h2>
-          <Link href="/meals" className="text-sm font-medium text-emerald-700">
-            View all meals
+          <h2 className="text-2xl md:text-3xl">Browse Categories</h2>
+          <Link href="/meals" className="text-sm font-semibold text-emerald-700">
+            View all
           </Link>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
             <CategoryCard key={category} name={category} href={`/meals?category=${encodeURIComponent(category)}`} />
           ))}
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="fade-up space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl">Featured Meals</h2>
-          <Link href="/meals" className="text-sm font-medium text-emerald-700">
+          <Link href="/meals" className="text-sm font-semibold text-emerald-700">
             Browse all
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featuredMeals.map((meal) => (
             <MealCard key={meal.id} meal={meal} />
           ))}
           {featuredMeals.length === 0 && (
-            <p className="text-sm text-slate-600">Featured meals are not available right now.</p>
+            <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+              Featured meals are not available right now.
+            </p>
           )}
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="fade-up space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl">Top Providers</h2>
-          <Link href="/providers" className="text-sm font-medium text-emerald-700">
+          <Link href="/providers" className="text-sm font-semibold text-emerald-700">
             Explore providers
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {topProviders.map((provider) => (
             <ProviderCard
-              key={provider.id}
+              key={provider.user?.id ?? provider.id}
               provider={{
-                id: provider.id,
-                name: provider.name ?? provider.user?.name,
-                location: (provider as Provider & { location?: string }).location,
-                totalMeals: provider.meals?.length ?? (provider as Provider & { totalMeals?: number }).totalMeals,
+                id: provider.user?.id ?? provider.id,
+                name: provider.restaurantName ?? provider.name ?? provider.user?.name,
+                location: provider.address ?? "Dhaka, Bangladesh",
+                totalMeals: provider.user?.meals?.length ?? provider.meals?.length ?? 0,
               }}
             />
           ))}
-          {topProviders.length === 0 && (
-            <p className="text-sm text-slate-600">Providers are loading. Please check again shortly.</p>
-          )}
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="fade-up space-y-4">
         <h2 className="text-2xl md:text-3xl">How It Works</h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          <article className="card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-            <p className="text-2xl">1</p>
-            <h3 className="text-xl">Browse Meals</h3>
-            <p className="text-sm text-slate-600">Filter by cuisine, price, and provider to find your meal.</p>
-          </article>
-          <article className="card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-            <p className="text-2xl">2</p>
-            <h3 className="text-xl">Place Order</h3>
-            <p className="text-sm text-slate-600">Add to cart, checkout with address, and confirm COD order.</p>
-          </article>
-          <article className="card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-            <p className="text-2xl">3</p>
-            <h3 className="text-xl">Track Delivery</h3>
-            <p className="text-sm text-slate-600">Follow each status from PLACED to DELIVERED in your orders.</p>
-          </article>
+        <div className="stagger grid gap-4 md:grid-cols-3">
+          {[
+            {
+              title: "Discover Meals",
+              text: "Search and filter meals by category, provider, and budget in seconds.",
+            },
+            {
+              title: "Checkout Fast",
+              text: "Use streamlined checkout and confirm orders with instant feedback.",
+            },
+            {
+              title: "Track Delivery",
+              text: "Watch your order progress from pending to delivered with status timeline.",
+            },
+          ].map((step, index) => (
+            <article key={step.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="mb-3 inline-flex size-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
+                {index + 1}
+              </p>
+              <h3 className="text-xl">{step.title}</h3>
+              <p className="mt-2 text-sm text-slate-600">{step.text}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-100 via-amber-50 to-orange-100 p-6 shadow-lg">
-        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div className="space-y-1">
-            <h2 className="text-2xl">Hungry right now?</h2>
-            <p className="text-sm text-slate-700">Start ordering from your favorite providers in a few clicks.</p>
+      <section className="fade-up rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-100 via-amber-50 to-orange-100 p-7 shadow-lg">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-2xl">Ready to order your next meal?</h2>
+            <p className="text-sm text-slate-700">Join thousands of users already ordering with FoodHub.</p>
           </div>
-          <Button asChild>
-            <Link href="/meals">Start Ordering Now</Link>
+          <Button asChild size="lg">
+            <Link href="/meals">Start Ordering</Link>
           </Button>
         </div>
       </section>

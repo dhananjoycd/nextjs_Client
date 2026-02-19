@@ -30,13 +30,18 @@ export default function ProviderPage() {
   }, [fetchProvider]);
 
   const filteredMeals = (() => {
-    if (!provider?.meals) return [];
+    const meals = provider?.meals ?? provider?.user?.meals ?? [];
+    if (!meals.length) return [];
     const min = Number(minPrice || 0);
     const max = Number(maxPrice || Number.MAX_SAFE_INTEGER);
 
-    return provider.meals.filter((meal) => {
-      const mealCategory = String(meal.category ?? "").toLowerCase();
-      if (category && mealCategory !== category.toLowerCase()) return false;
+    return meals.filter((meal) => {
+      const mealCategory =
+        typeof meal.category === "string"
+          ? meal.category
+          : (meal.category?.name ?? "");
+      const categoryText = mealCategory.toLowerCase();
+      if (category && categoryText !== category.toLowerCase()) return false;
       const price = Number(meal.price);
       if (price < min || price > max) return false;
       return true;
@@ -49,8 +54,10 @@ export default function ProviderPage() {
   return (
     <div className="space-y-4">
       <section className="card space-y-2">
-        <h1 className="text-3xl">{provider.name ?? provider.user?.name ?? "Provider"}</h1>
-        <p>{provider.bio ?? "No profile details yet."}</p>
+        <h1 className="text-3xl">
+          {provider.restaurantName ?? provider.name ?? provider.user?.name ?? "Provider"}
+        </h1>
+        <p>{provider.description ?? provider.bio ?? "No profile details yet."}</p>
         {provider.cuisine && <span className="status-pill">{provider.cuisine}</span>}
       </section>
 
@@ -66,7 +73,11 @@ export default function ProviderPage() {
           {filteredMeals.map((meal) => (
             <article className="card" key={meal.id}>
               <h3 className="text-lg">{meal.name ?? meal.title ?? "Meal"}</h3>
-              {meal.category && <p className="text-xs text-slate-600">{meal.category}</p>}
+              {meal.category && (
+                <p className="text-xs text-slate-600">
+                  {typeof meal.category === "string" ? meal.category : (meal.category.name ?? "Category")}
+                </p>
+              )}
               <p className="text-sm">${Number(meal.price).toFixed(2)}</p>
               <Link className="btn btn-outline mt-3 inline-block" href={`/meals/${meal.id}`}>
                 Meal Details

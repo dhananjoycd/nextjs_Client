@@ -1,23 +1,36 @@
 export type OrderItem = {
+  id?: string;
   mealId: string;
-  name: string;
-  price: number;
   quantity: number;
+  unitPrice?: number | string;
+  subTotal?: number | string;
+  meal?: {
+    id: string;
+    title?: string;
+    name?: string;
+    imageUrl?: string;
+    price?: number | string;
+  };
 };
 
 export type OrderStatus =
-  | "PLACED"
+  | "PENDING"
+  | "ACCEPTED"
   | "PREPARING"
-  | "READY"
+  | "OUT_FOR_DELIVERY"
   | "DELIVERED"
-  | "CANCELLED"
+  | "CANCELED"
   | string;
 
 export type Order = {
   id: string;
   status: OrderStatus;
-  totalAmount?: number;
+  paymentMethod?: "COD" | "STRIPE" | string;
+  paymentStatus?: "PENDING" | "PAID" | "FAILED" | string;
+  totalAmount?: number | string;
+  deliveryAddress?: string;
+  note?: string;
   createdAt?: string;
+  updatedAt?: string;
   items?: OrderItem[];
 };
-

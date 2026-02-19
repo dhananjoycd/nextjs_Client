@@ -32,7 +32,18 @@ export async function apiRequest<T>(
 export function extractPayload<T>(body: unknown): T {
   if (body && typeof body === "object") {
     const maybeRecord = body as Record<string, unknown>;
-    if ("data" in maybeRecord) return maybeRecord.data as T;
+    if ("data" in maybeRecord) {
+      const directData = maybeRecord.data;
+      if (
+        directData &&
+        typeof directData === "object" &&
+        "data" in (directData as Record<string, unknown>)
+      ) {
+        const nestedData = (directData as Record<string, unknown>).data;
+        if (Array.isArray(nestedData)) return nestedData as T;
+      }
+      return directData as T;
+    }
     if ("result" in maybeRecord) return maybeRecord.result as T;
   }
   return body as T;

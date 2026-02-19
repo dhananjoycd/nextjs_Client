@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
 import { apiRequest } from "@/lib/api";
 import { addMealToCart } from "@/lib/cart";
+import { cartService } from "@/services";
 import type { Meal } from "@/types";
 
 type MealReview = {
@@ -15,6 +17,7 @@ type MealReview = {
 };
 
 export default function MealDetailsPage() {
+  const { token, user } = useAuth();
   const params = useParams<{ id: string }>();
   const [meal, setMeal] = useState<Meal | null>(null);
   const [allMeals, setAllMeals] = useState<Meal[]>([]);
@@ -58,6 +61,10 @@ export default function MealDetailsPage() {
   if (!meal) return <p>Loading meal details...</p>;
 
   const reviews = ((meal as Meal & { reviews?: MealReview[] }).reviews ?? []) as MealReview[];
+  const mealCategory =
+    typeof meal.category === "string"
+      ? meal.category
+      : (meal.category?.name ?? "");
 
   return (
     <div className="space-y-4">
@@ -66,7 +73,7 @@ export default function MealDetailsPage() {
         <p>{meal.description ?? "No description provided."}</p>
         <div className="flex flex-wrap gap-2">
           <span className="status-pill">${Number(meal.price).toFixed(2)}</span>
-          {meal.category && <span className="status-pill">{meal.category}</span>}
+          {mealCategory && <span className="status-pill">{mealCategory}</span>}
           {meal.provider?.name && (
             <Link className="status-pill" href={`/providers/${meal.provider.id}`}>
               {meal.provider.name}
@@ -75,9 +82,19 @@ export default function MealDetailsPage() {
         </div>
         <button
           className="btn btn-primary w-fit"
-          onClick={() => {
-            addMealToCart(meal);
-            setMessage("Added to cart.");
+          onClick={async () => {
+            try {
+              setMessage("");
+              if (token && user?.role === "CUSTOMER") {
+                await cartService.add(token, { mealId: meal.id, quantity: 1 });
+                setMessage("Added to cart.");
+                return;
+              }
+              addMealToCart(meal);
+              setMessage("Saved locally. Login as customer and sync from cart page.");
+            } catch (err) {
+              setMessage(err instanceof Error ? err.message : "Failed to add to cart.");
+            }
           }}
         >
           Add to Cart
