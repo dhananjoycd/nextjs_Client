@@ -8,7 +8,6 @@ import { Protected } from "@/components/Protected";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { useAuth } from "@/components/AuthProvider";
 import {
-  Badge,
   Button,
   Card,
   Dialog,
@@ -31,26 +30,6 @@ function includesText(value: unknown, query: string) {
   return String(value ?? "").toLowerCase().includes(query.toLowerCase());
 }
 
-function getOrderProviders(order: Order) {
-  const names = new Set<string>();
-
-  for (const item of order.items ?? []) {
-    const mealRecord = item.meal as
-      | {
-          provider?: { name?: string };
-        }
-      | undefined;
-
-    const providerName = mealRecord?.provider?.name?.trim();
-    if (providerName) {
-      names.add(providerName);
-    }
-  }
-
-  if (names.size === 0) return "Unknown provider";
-  return Array.from(names).join(", ");
-}
-
 function getOrderProviderDetails(order: Order) {
   const providers = new Map<string, { id: string; name: string }>();
 
@@ -64,15 +43,6 @@ function getOrderProviderDetails(order: Order) {
   }
 
   return Array.from(providers.values());
-}
-
-function getOrderCustomer(order: Order) {
-  const customerName = order.customer?.name?.trim();
-  const customerEmail = order.customer?.email?.trim();
-  if (customerName && customerEmail) return `${customerName} (${customerEmail})`;
-  if (customerName) return customerName;
-  if (customerEmail) return customerEmail;
-  return "Unknown customer";
 }
 
 function formatDate(value?: string) {
@@ -219,7 +189,11 @@ export default function AdminPage() {
   const filteredCategories = useMemo(() => {
     return categories.filter((category) => {
       if (!categorySearch) return true;
-      return includesText(category.name, categorySearch) || includesText(category.description, categorySearch);
+      return (
+        includesText(category.name, categorySearch) ||
+        includesText(category.description, categorySearch) ||
+        includesText(category.imageUrl, categorySearch)
+      );
     });
   }, [categories, categorySearch]);
 
@@ -259,15 +233,21 @@ export default function AdminPage() {
     defaultValues: {
       name: "",
       description: "",
+      imageUrl: "",
     },
     onSubmit: async ({ value }) => {
       if (!token) throw new Error("Please login again");
+      const payload = {
+        name: value.name.trim(),
+        description: value.description.trim() || undefined,
+        imageUrl: value.imageUrl.trim() || undefined,
+      };
 
       if (editingCategory) {
-        await categoriesService.update(token, editingCategory.id, value);
+        await categoriesService.update(token, editingCategory.id, payload);
         toast.success("Category updated");
       } else {
-        await categoriesService.create(token, value);
+        await categoriesService.create(token, payload);
         toast.success("Category created");
       }
 
@@ -284,10 +264,11 @@ export default function AdminPage() {
       categoryForm.reset({
         name: editingCategory.name ?? "",
         description: editingCategory.description ?? "",
+        imageUrl: editingCategory.imageUrl ?? "",
       });
       return;
     }
-    categoryForm.reset({ name: "", description: "" });
+    categoryForm.reset({ name: "", description: "", imageUrl: "" });
   }, [categoryForm, editingCategory, openCategory]);
 
   async function toggleUserStatus(user: User, active: boolean) {
@@ -303,7 +284,7 @@ export default function AdminPage() {
 
   function openCreateCategory() {
     setEditingCategory(null);
-    categoryForm.reset({ name: "", description: "" });
+    categoryForm.reset({ name: "", description: "", imageUrl: "" });
     setOpenCategory(true);
   }
 
@@ -571,24 +552,49 @@ export default function AdminPage() {
                 </Button>
               </div>
               <Input
-                placeholder="Search category name/description"
+                placeholder="Search category name/description/image"
                 value={categorySearch}
                 onChange={(e) => setCategorySearch(e.target.value)}
               />
               <div className="grid gap-3 md:grid-cols-2">
                 {pagedCategories.map((category) => (
-                  <div key={category.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                    <p className="font-medium">{category.name}</p>
-                    <p className="text-sm text-slate-600">{category.description ?? "No description"}</p>
-                    <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="secondary" onClick={() => openEditCategory(category)}>
-                        <Pencil className="size-4" /> Edit
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => setDeletingCategory(category)}>
-                        <Trash2 className="size-4" /> Delete
-                      </Button>
+                  <article key={category.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <div
+                      className="h-36 w-full bg-gradient-to-br from-emerald-100 via-amber-50 to-orange-100"
+                      style={
+                        category.imageUrl
+                          ? {
+                              backgroundImage: `url(${category.imageUrl})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                            }
+                          : undefined
+                      }
+                    />
+                    <div className="space-y-2 p-3">
+                      <p className="font-medium">{category.name}</p>
+                      <p className="text-sm text-slate-600">{category.description ?? "No description"}</p>
+                      <p className="text-xs text-slate-500">
+                        <span className="font-medium text-slate-600">Slug:</span> {category.slug ?? "-"}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        <span className="font-medium text-slate-600">ID:</span> {category.id.slice(0, 8)}...
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {category.imageUrl ? "Custom image added" : "Using default image"}
+                      </p>
+                      <div className="border-t border-slate-100 pt-3">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => openEditCategory(category)}>
+                            <Pencil className="size-4" /> Edit
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => setDeletingCategory(category)}>
+                            <Trash2 className="size-4" /> Delete
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </article>
                 ))}
                 {pagedCategories.length === 0 && <p className="text-sm text-slate-500">No categories found.</p>}
               </div>
@@ -761,7 +767,7 @@ export default function AdminPage() {
             setOpenCategory(nextOpen);
             if (!nextOpen) {
               setEditingCategory(null);
-              categoryForm.reset({ name: "", description: "" });
+              categoryForm.reset({ name: "", description: "", imageUrl: "" });
             }
           }}
         >
@@ -804,6 +810,14 @@ export default function AdminPage() {
                   </div>
                 )}
               </categoryForm.Field>
+              <categoryForm.Field name="imageUrl">
+                {(field) => (
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Image URL</label>
+                    <Input value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+                  </div>
+                )}
+              </categoryForm.Field>
               <categoryForm.Subscribe selector={(state) => ({ isSubmitting: state.isSubmitting })}>
                 {({ isSubmitting }) => (
                   <Button className="w-full" disabled={isSubmitting}>
@@ -827,7 +841,7 @@ export default function AdminPage() {
             <DialogHeader>
               <DialogTitle>Delete Category</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "{deletingCategory?.name}"?
+                Are you sure you want to delete &quot;{deletingCategory?.name}&quot;?
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2">

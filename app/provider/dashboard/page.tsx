@@ -23,7 +23,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { categoriesService } from "@/services";
-import type { Category, Meal, Order } from "@/types";
+import type { Category, Meal, Order, Provider } from "@/types";
 
 type ProviderMeal = Meal & {
   isAvailable?: boolean;
@@ -106,8 +106,25 @@ export default function ProviderDashboardPage() {
     if (!token || !user?.id) return;
     try {
       if (!silent) setLoading(true);
+
+      const providerScopeIds = new Set<string>([String(user.id ?? "").trim().toLowerCase()]);
+      try {
+        const providerList = await apiRequest<Provider[]>("/api/v1/providers", { token });
+        for (const provider of Array.isArray(providerList) ? providerList : []) {
+          const providerUserId = String(provider.user?.id ?? "").trim().toLowerCase();
+          const providerId = String(provider.id ?? "").trim().toLowerCase();
+          if (providerUserId && providerUserId === String(user.id).trim().toLowerCase() && providerId) {
+            providerScopeIds.add(providerId);
+          }
+        }
+      } catch {
+        // Keep using authenticated user id when provider list is unavailable.
+      }
+
       const mealEndpoints = [
-        `/api/v1/meals?providerId=${encodeURIComponent(user.id)}&limit=100`,
+        ...Array.from(providerScopeIds).map(
+          (id) => `/api/v1/meals?providerId=${encodeURIComponent(id)}&limit=100`,
+        ),
         "/api/v1/meals/my",
         "/api/v1/meals?limit=100",
         "/api/v1/meals",
@@ -138,15 +155,17 @@ export default function ProviderDashboardPage() {
           : [];
 
       const ownedMeals = mealList.filter((meal) => {
-        const directProviderId = String(meal.providerId ?? "");
-        const providerId = String(meal.provider?.id ?? "");
+        const directProviderId = String(meal.providerId ?? "").trim().toLowerCase();
+        const providerId = String(meal.provider?.id ?? "").trim().toLowerCase();
         const providerRecord = (meal as Meal & { provider?: { user?: { id?: string }; userId?: string } }).provider;
-        const providerUserId = String(providerRecord?.user?.id ?? providerRecord?.userId ?? "");
-        return [directProviderId, providerId, providerUserId].includes(user.id);
+        const providerUserId = String(providerRecord?.user?.id ?? providerRecord?.userId ?? "").trim().toLowerCase();
+
+        return [directProviderId, providerId, providerUserId].some((id) => providerScopeIds.has(id));
       });
 
       setOrders(normalizedOrders);
-      setMeals(ownedMeals.length > 0 ? ownedMeals : mealList);
+      // Strict ownership: never fall back to global meal list for provider menu management.
+      setMeals(ownedMeals);
       setCategories(normalizedCategories);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (error) {

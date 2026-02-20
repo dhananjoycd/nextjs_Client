@@ -1,30 +1,65 @@
 import Link from "next/link";
-import { ArrowRight, UtensilsCrossed } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Badge, Card } from "@/components/ui";
 
 type CategoryCardProps = {
   name: string;
   href: string;
+  mealCount?: number;
+  imageSrc?: string;
+  imagePosition?: string;
+  overlayToneClass?: string;
+  className?: string;
 };
 
-export function CategoryCard({ name, href }: CategoryCardProps) {
-  return (
-    <Link href={href} aria-label={`Browse ${name} meals`} className="block h-full">
-      <Card className="group relative h-full min-h-[168px] overflow-hidden border-slate-200/90 bg-white/95 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-h-[176px] sm:p-5">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/80 via-transparent to-amber-50/70 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+export function CategoryCard({
+  name,
+  href,
+  mealCount = 0,
+  imageSrc,
+  imagePosition = "center",
+  overlayToneClass = "from-emerald-900/70 via-slate-900/30 to-amber-900/60",
+  className = "",
+}: CategoryCardProps) {
+  const totalMeals = Number.isFinite(mealCount) ? mealCount : 0;
+  const backgroundStyle = imageSrc
+    ? {
+        backgroundImage: `url(${imageSrc})`,
+        backgroundSize: "cover",
+        backgroundPosition: imagePosition,
+      }
+    : undefined;
 
-        <div className="relative flex h-full flex-col gap-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 sm:size-12">
-              <UtensilsCrossed className="size-5" />
-            </div>
-            <ArrowRight className="mt-1 size-4 text-slate-400 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-emerald-700" />
+  return (
+    <Link
+      href={href}
+      aria-label={`Browse ${name} meals`}
+      className={`group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${className}`}
+    >
+      <Card className="relative h-full min-h-[140px] overflow-hidden border-slate-200/80 p-0 shadow-[0_8px_28px_rgba(15,23,42,0.12)] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_18px_38px_rgba(15,23,42,0.18)] sm:min-h-[180px] lg:min-h-[220px]">
+        <div
+          role="img"
+          aria-label={`${name} category meals`}
+          className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
+          style={backgroundStyle}
+        />
+
+        <div className={`absolute inset-0 bg-gradient-to-br ${overlayToneClass}`} />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/25 to-transparent" />
+
+        <div className="relative flex h-full flex-col justify-end p-3 sm:p-4 lg:p-5">
+          <div className="mb-2 flex items-start justify-start">
+            <Badge className="border border-white/30 bg-white/25 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm sm:text-xs">
+              {totalMeals} meals
+            </Badge>
           </div>
 
-          <div className="space-y-2">
-            <Badge className="max-w-full my-2 truncate bg-white text-emerald-700">{name}</Badge>
-            <p className="line-clamp-2 text-sm leading-relaxed text-slate-600 transition-colors group-hover:text-slate-800">
-              Explore curated {name.toLowerCase()} dishes from trusted providers.
+          <div className="space-y-1 sm:space-y-1.5">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-white sm:text-xl lg:text-2xl">{name}</h3>
+
+            <p className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-200 transition-all group-hover:gap-2 group-hover:text-emerald-100 sm:text-sm lg:text-base">
+              Explore
+              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
             </p>
           </div>
         </div>

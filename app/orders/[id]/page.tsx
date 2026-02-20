@@ -173,7 +173,14 @@ export default function OrderDetailsPage() {
               {(order.items ?? []).map((item) => (
                 <div key={item.id ?? item.mealId} className="space-y-3 rounded-xl border p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <p>{item.meal?.title ?? item.meal?.name ?? "Meal"}</p>
+                    <div>
+                      <p>{item.meal?.title ?? item.meal?.name ?? "Meal"}</p>
+                      {item.mealId ? (
+                        <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs">
+                          <Link href={`/meals/${item.mealId}`}>View details</Link>
+                        </Button>
+                      ) : null}
+                    </div>
                     <p className="text-sm text-slate-600">
                       {item.quantity} x ${Number(item.unitPrice ?? item.meal?.price ?? 0).toFixed(2)}
                     </p>

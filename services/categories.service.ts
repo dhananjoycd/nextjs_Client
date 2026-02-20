@@ -5,14 +5,14 @@ export const categoriesService = {
   list(token?: string) {
     return apiRequest<Category[]>("/api/v1/categories", { token });
   },
-  create(token: string, payload: { name: string; description?: string }) {
+  create(token: string, payload: { name: string; description?: string; imageUrl?: string }) {
     return apiRequest<Category>("/api/v1/categories", {
       method: "POST",
       token,
       body: JSON.stringify(payload),
     });
   },
-  update(token: string, id: string, payload: { name?: string; description?: string }) {
+  update(token: string, id: string, payload: { name?: string; description?: string; imageUrl?: string }) {
     return apiRequest<Category>(`/api/v1/categories/${id}`, {
       method: "PATCH",
       token,

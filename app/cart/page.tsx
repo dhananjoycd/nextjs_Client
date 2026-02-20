@@ -128,6 +128,9 @@ export default function CartPage() {
             <p className="line-clamp-2 font-medium leading-snug">{item.name}</p>
             <p className="truncate text-sm text-slate-600">{item.providerName}</p>
             <p className="text-sm text-emerald-700">{formatMoney(item.price)}</p>
+            <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs">
+              <Link href={`/meals/${item.mealId}`}>View details</Link>
+            </Button>
           </div>
           <Button
             size="icon"
@@ -337,3 +340,4 @@ export default function CartPage() {
     </div>
   );
 }
+

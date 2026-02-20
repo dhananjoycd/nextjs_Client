@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ export default function ProfilePage() {
     image: "",
   });
 
-  async function loadProfile() {
+  const loadProfile = useCallback(async () => {
     if (!token) {
       setLoading(false);
       return;
@@ -40,11 +40,11 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
 
   useEffect(() => {
     void loadProfile();
-  }, [token]);
+  }, [loadProfile]);
 
   const key = useMemo(() => JSON.stringify(initial), [initial]);
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -311,6 +312,21 @@ export default function CheckoutPage() {
 
       <Card className="space-y-4">
         <h2 className="text-xl">5) Summary</h2>
+        <div className="space-y-2">
+          {items.map((item) => (
+            <div key={item.mealId} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-2">
+              <div className="min-w-0">
+                <p className="line-clamp-1 text-sm font-medium">{item.name}</p>
+                <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs">
+                  <Link href={`/meals/${item.mealId}`}>View details</Link>
+                </Button>
+              </div>
+              <p className="shrink-0 text-sm text-slate-600">
+                {item.quantity} x {formatMoney(item.price)}
+              </p>
+            </div>
+          ))}
+        </div>
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
             <span>Items</span>
@@ -339,7 +355,7 @@ export default function CheckoutPage() {
           <Alert>
             <AlertTitle>Stripe Checkout</AlertTitle>
             <AlertDescription>
-              Place Order ????? Stripe payment page-? ?????
+              After you click Place Order, you will be redirected to Stripe to complete payment securely.
             </AlertDescription>
           </Alert>
         )}
@@ -357,3 +373,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+

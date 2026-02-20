@@ -44,7 +44,10 @@ export function ProviderCard({ provider }: ProviderCardProps) {
         <span className="font-semibold text-emerald-800">{provider.totalMeals ?? 0}</span>
       </div>
 
-      <Button asChild variant="outline" className="h-11 w-full justify-around rounded-xl px-4">
+      <Button
+        asChild
+        className="h-11 w-full justify-around rounded-xl bg-emerald-600 px-4 text-white shadow-[0_10px_24px_rgba(5,150,105,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-500"
+      >
         <Link href={`/providers/${provider.id}`}>
           Visit Profile
           <ArrowRight className="size-4" />
