@@ -63,8 +63,8 @@ export default function ProviderPage() {
 
       <section className="card grid gap-3 md:grid-cols-3">
         <input className="field" placeholder="Filter by category" value={category} onChange={(e) => setCategory(e.target.value)} />
-        <input className="field" placeholder="Min price" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
-        <input className="field" placeholder="Max price" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
+        <input type="number" min="0" className="field" placeholder="Min price" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
+        <input type="number" min="0" className="field" placeholder="Max price" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
       </section>
 
       <section>

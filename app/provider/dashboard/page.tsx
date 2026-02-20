@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
   Input,
+  Pagination,
   Textarea,
 } from "@/components/ui";
 import { categoriesService } from "@/services";
@@ -28,7 +29,7 @@ type ProviderMeal = Meal & {
   isAvailable?: boolean;
 };
 
-const ORDERS_PER_PAGE = 6;
+const PAGE_SIZE = 10;
 const LIVE_REFRESH_MS = 20_000;
 const ORDER_STATUS_OPTIONS = [
   "PENDING",
@@ -209,9 +210,9 @@ export default function ProviderDashboardPage() {
     });
   }, [orders, orderSearch, orderStatusFilter]);
 
-  const totalOrderPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+  const totalOrderPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
   const pagedOrders = useMemo(
-    () => filteredOrders.slice((orderPage - 1) * ORDERS_PER_PAGE, orderPage * ORDERS_PER_PAGE),
+    () => filteredOrders.slice((orderPage - 1) * PAGE_SIZE, orderPage * PAGE_SIZE),
     [filteredOrders, orderPage],
   );
 
@@ -493,25 +494,14 @@ export default function ProviderDashboardPage() {
                       </div>
                     </article>
                   ))}
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      disabled={orderPage <= 1}
-                      onClick={() => setOrderPage((prev) => prev - 1)}
-                    >
-                      Prev
-                    </Button>
-                    <span className="text-sm text-slate-600">
-                      Page {orderPage} of {totalOrderPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      disabled={orderPage >= totalOrderPages}
-                      onClick={() => setOrderPage((prev) => prev + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
+                  <Pagination
+                    page={orderPage}
+                    totalPages={totalOrderPages}
+                    onPageChange={setOrderPage}
+                    totalItems={filteredOrders.length}
+                    pageSize={PAGE_SIZE}
+                    itemLabel="orders"
+                  />
                 </div>
               )}
             </Card>

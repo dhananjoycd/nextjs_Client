@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
-import { Badge, Button, Card, Input, Skeleton } from "@/components/ui";
+import { Badge, Button, Card, Input, Pagination, Skeleton } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
 import { addMealToCart } from "@/lib/cart";
 import { formatMoney } from "@/lib/money";
 import type { Meal } from "@/types";
+
+const PAGE_SIZE = 10;
 
 function toTagList(value: unknown): string[] {
   if (!value) return [];
@@ -47,29 +49,18 @@ function mealCategory(meal: Meal): string {
   return String(meal.category.name ?? meal.category.slug ?? "").trim();
 }
 
-function mealDietaryTags(meal: Meal): string[] {
-  const unique = new Set(
-    [
-      ...toTagList(meal.dietary),
-      ...toTagList(meal.dietaryPreferences),
-      ...toTagList(meal.tags),
-    ]
-      .map((value) => value.trim())
-      .filter(Boolean),
-  );
-  return Array.from(unique);
-}
-
 export default function MealsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
-  const [dietaryFilter, setDietaryFilter] = useState("ALL");
   const [minPriceFilter, setMinPriceFilter] = useState("");
   const [maxPriceFilter, setMaxPriceFilter] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   const fetchMeals = useCallback(async () => {
     try {
@@ -89,6 +80,16 @@ export default function MealsPage() {
     void fetchMeals();
   }, [fetchMeals]);
 
+  useEffect(() => {
+    const query = (searchParams.get("search") ?? "").trim();
+    setSearchFilter(query);
+
+    const categoryQuery = (searchParams.get("category") ?? "").trim();
+    if (categoryQuery) {
+      setCategoryFilter(categoryQuery);
+    }
+  }, [searchParams]);
+
   const preparedMeals = useMemo(
     () =>
       meals.map((meal) => ({
@@ -96,7 +97,6 @@ export default function MealsPage() {
         title: meal.name ?? meal.title ?? "Meal",
         tags: mealTags(meal),
         categoryLabel: mealCategory(meal),
-        dietaryTags: mealDietaryTags(meal),
         providerName: meal.provider?.name ?? "Provider",
       })),
     [meals],
@@ -110,26 +110,21 @@ export default function MealsPage() {
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [preparedMeals]);
 
-  const dietaryOptions = useMemo(() => {
-    const values = new Set<string>();
-    for (const meal of preparedMeals) {
-      for (const tag of meal.dietaryTags) values.add(tag);
-    }
-    return Array.from(values).sort((a, b) => a.localeCompare(b));
-  }, [preparedMeals]);
-
   const filteredMeals = useMemo(() => {
     const minPrice = minPriceFilter.trim() ? Number(minPriceFilter) : undefined;
     const maxPrice = maxPriceFilter.trim() ? Number(maxPriceFilter) : undefined;
+    const searchText = searchFilter.trim().toLowerCase();
 
     return preparedMeals.filter((meal) => {
-      if (categoryFilter !== "ALL" && meal.categoryLabel !== categoryFilter) return false;
-      if (
-        dietaryFilter !== "ALL" &&
-        !meal.dietaryTags.some((tag) => tag.toLowerCase() === dietaryFilter.toLowerCase())
-      ) {
-        return false;
+      if (searchText) {
+        const matchesSearch =
+          String(meal.title ?? "").toLowerCase().includes(searchText) ||
+          String(meal.providerName ?? "").toLowerCase().includes(searchText) ||
+          meal.tags.some((tag) => tag.toLowerCase().includes(searchText));
+        if (!matchesSearch) return false;
       }
+
+      if (categoryFilter !== "ALL" && meal.categoryLabel !== categoryFilter) return false;
 
       const price = Number(meal.price ?? 0);
       if (minPrice !== undefined && Number.isFinite(minPrice) && price < minPrice) return false;
@@ -137,13 +132,28 @@ export default function MealsPage() {
 
       return true;
     });
-  }, [categoryFilter, dietaryFilter, maxPriceFilter, minPriceFilter, preparedMeals]);
+  }, [categoryFilter, maxPriceFilter, minPriceFilter, preparedMeals, searchFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredMeals.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchFilter, categoryFilter, minPriceFilter, maxPriceFilter]);
+
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  const pagedMeals = useMemo(
+    () => filteredMeals.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredMeals, page],
+  );
 
   function clearFilters() {
     setCategoryFilter("ALL");
-    setDietaryFilter("ALL");
     setMinPriceFilter("");
     setMaxPriceFilter("");
+    setSearchFilter("");
   }
 
   function handleAddToCart(meal: Meal) {
@@ -200,20 +210,17 @@ export default function MealsPage() {
                 Clear Filters
               </Button>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+              <Input
+                placeholder="Search meal/provider/tag"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+              />
               <select className="field" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
                 <option value="ALL">All cuisines/categories</option>
                 {categoryOptions.map((category) => (
                   <option key={category} value={category}>
                     {category}
-                  </option>
-                ))}
-              </select>
-              <select className="field" value={dietaryFilter} onChange={(e) => setDietaryFilter(e.target.value)}>
-                <option value="ALL">All dietary</option>
-                {dietaryOptions.map((dietary) => (
-                  <option key={dietary} value={dietary}>
-                    {dietary}
                   </option>
                 ))}
               </select>
@@ -238,7 +245,7 @@ export default function MealsPage() {
           </Card>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredMeals.map((meal) => (
+          {pagedMeals.map((meal) => (
             <Card key={meal.id} className="overflow-hidden p-0">
               <div
                 className="h-40 bg-gradient-to-br from-orange-100 via-amber-50 to-rose-100"
@@ -270,6 +277,16 @@ export default function MealsPage() {
             </Card>
           ))}
           </div>
+          {filteredMeals.length > 0 && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              totalItems={filteredMeals.length}
+              pageSize={PAGE_SIZE}
+              itemLabel="meals"
+            />
+          )}
           {filteredMeals.length === 0 && (
             <Card>
               <p className="text-sm text-slate-600">No meals match current filters.</p>

@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
-import { Button, Card, Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type DashboardShellProps = {
@@ -62,39 +61,10 @@ export function DashboardShell({ title, description, links, hideNav = false, chi
       )}
 
       <div className="space-y-4">
-        {!hideNav && (
-        <Card className="flex items-center justify-between gap-3 lg:hidden">
-          <div>
-            <h1 className="text-xl">{title}</h1>
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button size="icon" variant="secondary">
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <SheetTitle>Dashboard Menu</SheetTitle>
-              <nav className="mt-5 space-y-2">
-                {links.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "block rounded-lg px-3 py-2 text-sm font-medium",
-                      isLinkActive(link.href, link.active)
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "text-slate-700 hover:bg-slate-100",
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
+        <Card className="lg:hidden">
+          <h1 className="text-xl">{title}</h1>
+          {description && <p className="text-sm text-slate-600">{description}</p>}
         </Card>
-        )}
 
         <Card className="hidden lg:block">
           <h1 className="text-2xl">{title}</h1>

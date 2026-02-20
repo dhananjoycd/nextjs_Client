@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Pagination,
   Switch,
   Textarea,
 } from "@/components/ui";
@@ -25,7 +26,6 @@ import type { Category, Order, User } from "@/types";
 
 const PAGE_SIZE = 10;
 const LIVE_REFRESH_MS = 20_000;
-type PageToken = number | "...";
 
 function includesText(value: unknown, query: string) {
   return String(value ?? "").toLowerCase().includes(query.toLowerCase());
@@ -87,40 +87,6 @@ function formatDateTime(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
-}
-
-function buildPageTokens(current: number, total: number): PageToken[] {
-  if (total <= 8) {
-    return Array.from({ length: total }, (_, index) => index + 1);
-  }
-
-  const selected = new Set<number>([
-    1,
-    2,
-    3,
-    total - 2,
-    total - 1,
-    total,
-    current - 1,
-    current,
-    current + 1,
-  ]);
-
-  const pages = Array.from(selected)
-    .filter((page) => page >= 1 && page <= total)
-    .sort((a, b) => a - b);
-
-  const tokens: PageToken[] = [];
-  for (let i = 0; i < pages.length; i += 1) {
-    const page = pages[i];
-    const prev = pages[i - 1];
-    if (i > 0 && prev !== undefined && page - prev > 1) {
-      tokens.push("...");
-    }
-    tokens.push(page);
-  }
-
-  return tokens;
 }
 
 export default function AdminPage() {
@@ -289,13 +255,6 @@ export default function AdminPage() {
   const pagedOrders = filteredOrders.slice((orderPage - 1) * PAGE_SIZE, orderPage * PAGE_SIZE);
   const pagedCategories = filteredCategories.slice((categoryPage - 1) * PAGE_SIZE, categoryPage * PAGE_SIZE);
 
-  const userPageTokens = useMemo(() => buildPageTokens(userPage, totalUserPages), [userPage, totalUserPages]);
-  const orderPageTokens = useMemo(() => buildPageTokens(orderPage, totalOrderPages), [orderPage, totalOrderPages]);
-  const categoryPageTokens = useMemo(
-    () => buildPageTokens(categoryPage, totalCategoryPages),
-    [categoryPage, totalCategoryPages],
-  );
-
   const categoryForm = useForm({
     defaultValues: {
       name: "",
@@ -419,7 +378,31 @@ export default function AdminPage() {
                   <option value="SUSPENDED">Suspended</option>
                 </select>
               </div>
-              <div className="overflow-x-auto">
+              <div className="space-y-2 md:hidden">
+                {pagedUsers.map((user) => {
+                  const isActive = user.status !== "SUSPENDED";
+                  return (
+                    <article key={user.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="space-y-1">
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-slate-600 break-all">{user.email}</p>
+                        <p className="text-xs text-slate-500">Status: {user.status ?? "ACTIVE"}</p>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setSelectedUser(user)}>
+                          View Details
+                        </Button>
+                        <Switch checked={isActive} onCheckedChange={(value) => toggleUserStatus(user, value)} />
+                      </div>
+                    </article>
+                  );
+                })}
+                {pagedUsers.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-slate-500">No users found.</p>
+                )}
+              </div>
+
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[760px] text-sm">
                   <thead>
                     <tr className="border-b text-left text-slate-500">
@@ -459,39 +442,14 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button variant="outline" disabled={userPage <= 1} onClick={() => setUserPage((prev) => prev - 1)}>
-                  Prev
-                </Button>
-                <span className="text-sm text-slate-600">
-                  Page {userPage} of {totalUserPages}
-                </span>
-                <div className="flex items-center gap-1">
-                  {userPageTokens.map((token, index) =>
-                    token === "..." ? (
-                      <span key={`user-ellipsis-${index}`} className="px-1 text-sm text-slate-500">
-                        ...
-                      </span>
-                    ) : (
-                      <Button
-                        key={`user-page-${token}`}
-                        size="sm"
-                        variant={userPage === token ? "default" : "outline"}
-                        onClick={() => setUserPage(token)}
-                      >
-                        {token}
-                      </Button>
-                    ),
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={userPage >= totalUserPages}
-                  onClick={() => setUserPage((prev) => prev + 1)}
-                >
-                  Next
-                </Button>
-              </div>
+              <Pagination
+                page={userPage}
+                totalPages={totalUserPages}
+                onPageChange={setUserPage}
+                totalItems={filteredUsers.length}
+                pageSize={PAGE_SIZE}
+                itemLabel="users"
+              />
             </Card>
 
             <Card id="orders" className="space-y-3">
@@ -512,7 +470,33 @@ export default function AdminPage() {
                   <option value="CANCELED">Canceled</option>
                 </select>
               </div>
-              <div className="overflow-x-auto">
+              <div className="space-y-2 md:hidden">
+                {pagedOrders.map((order) => (
+                  <article key={order.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="space-y-1">
+                      <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
+                      <p className="text-sm text-slate-600">Status: {order.status}</p>
+                      <p className="text-sm text-emerald-700">${Number(order.totalAmount ?? 0).toFixed(2)}</p>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setSelectedOrderForCustomer(order)}>
+                        Customer
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedOrderForProviders(order)}>
+                        Provider
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedOrderForDetails(order)}>
+                        Details
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+                {pagedOrders.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-slate-500">No orders found.</p>
+                )}
+              </div>
+
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[980px] text-sm">
                   <thead>
                     <tr className="border-b text-left text-slate-500">
@@ -569,39 +553,14 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button variant="outline" disabled={orderPage <= 1} onClick={() => setOrderPage((prev) => prev - 1)}>
-                  Prev
-                </Button>
-                <span className="text-sm text-slate-600">
-                  Page {orderPage} of {totalOrderPages}
-                </span>
-                <div className="flex items-center gap-1">
-                  {orderPageTokens.map((token, index) =>
-                    token === "..." ? (
-                      <span key={`order-ellipsis-${index}`} className="px-1 text-sm text-slate-500">
-                        ...
-                      </span>
-                    ) : (
-                      <Button
-                        key={`order-page-${token}`}
-                        size="sm"
-                        variant={orderPage === token ? "default" : "outline"}
-                        onClick={() => setOrderPage(token)}
-                      >
-                        {token}
-                      </Button>
-                    ),
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={orderPage >= totalOrderPages}
-                  onClick={() => setOrderPage((prev) => prev + 1)}
-                >
-                  Next
-                </Button>
-              </div>
+              <Pagination
+                page={orderPage}
+                totalPages={totalOrderPages}
+                onPageChange={setOrderPage}
+                totalItems={filteredOrders.length}
+                pageSize={PAGE_SIZE}
+                itemLabel="orders"
+              />
             </Card>
 
             <Card id="categories" className="space-y-3">
@@ -633,43 +592,14 @@ export default function AdminPage() {
                 ))}
                 {pagedCategories.length === 0 && <p className="text-sm text-slate-500">No categories found.</p>}
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button
-                  variant="outline"
-                  disabled={categoryPage <= 1}
-                  onClick={() => setCategoryPage((prev) => prev - 1)}
-                >
-                  Prev
-                </Button>
-                <span className="text-sm text-slate-600">
-                  Page {categoryPage} of {totalCategoryPages}
-                </span>
-                <div className="flex items-center gap-1">
-                  {categoryPageTokens.map((token, index) =>
-                    token === "..." ? (
-                      <span key={`category-ellipsis-${index}`} className="px-1 text-sm text-slate-500">
-                        ...
-                      </span>
-                    ) : (
-                      <Button
-                        key={`category-page-${token}`}
-                        size="sm"
-                        variant={categoryPage === token ? "default" : "outline"}
-                        onClick={() => setCategoryPage(token)}
-                      >
-                        {token}
-                      </Button>
-                    ),
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={categoryPage >= totalCategoryPages}
-                  onClick={() => setCategoryPage((prev) => prev + 1)}
-                >
-                  Next
-                </Button>
-              </div>
+              <Pagination
+                page={categoryPage}
+                totalPages={totalCategoryPages}
+                onPageChange={setCategoryPage}
+                totalItems={filteredCategories.length}
+                pageSize={PAGE_SIZE}
+                itemLabel="categories"
+              />
             </Card>
           </>
         )}

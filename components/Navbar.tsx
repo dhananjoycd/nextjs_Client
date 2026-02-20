@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, ShoppingBag, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -68,6 +69,7 @@ function NavLink({
 export function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks =
     user?.role === "CUSTOMER"
@@ -80,6 +82,16 @@ export function Navbar() {
         : user?.role === "ADMIN"
           ? [{ href: "/admin", label: "Admin Dashboard" }]
           : guestLinks;
+
+  const mobilePublicLinks = guestLinks;
+  const mobileRoleLinks =
+    user?.role === "CUSTOMER"
+      ? customerLinks
+      : user?.role === "PROVIDER"
+        ? [{ href: "/provider/dashboard", label: "Provider Dashboard" }]
+        : user?.role === "ADMIN"
+          ? [{ href: "/admin", label: "Admin Dashboard" }]
+          : [];
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/75 backdrop-blur-lg">
@@ -150,42 +162,79 @@ export function Navbar() {
           )}
         </div>
 
-        <Sheet>
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild className="md:hidden">
             <Button size="icon" variant="secondary" aria-label="Open menu">
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="space-y-6">
+          <SheetContent side="right" className="space-y-6 w-[88vw] max-w-sm">
             <SheetTitle>Menu</SheetTitle>
-            <div className="flex flex-col gap-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-sm font-medium",
-                    isLinkActive(pathname, link.href)
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "text-slate-700 hover:bg-slate-100",
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Explore</p>
+                <div className="flex flex-col gap-2">
+                  {mobilePublicLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "rounded-lg px-3 py-2.5 text-sm font-medium",
+                        isLinkActive(pathname, link.href)
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              {mobileRoleLinks.length > 0 && (
+                <div className="space-y-2">
+                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    {user?.role === "CUSTOMER" ? "My Account" : user?.role}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {mobileRoleLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "rounded-lg px-3 py-2.5 text-sm font-medium",
+                          isLinkActive(pathname, link.href)
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "text-slate-700 hover:bg-slate-100",
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="space-y-2 border-t border-slate-200 pt-4">
               {!user ? (
                 <>
-                  <Button asChild variant="secondary" className="w-full">
-                    <Link href="/login">Login</Link>
+                <Button asChild variant="secondary" className="w-full">
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
                   </Button>
                   <Button asChild className="w-full">
-                    <Link href="/register">Register</Link>
+                    <Link href="/register" onClick={() => setMobileMenuOpen(false)}>Register</Link>
                   </Button>
                 </>
               ) : (
-                <Button variant="destructive" className="w-full" onClick={logout}>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                >
                   Logout
                 </Button>
               )}

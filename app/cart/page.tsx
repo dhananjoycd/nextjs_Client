@@ -116,31 +116,53 @@ export default function CartPage() {
   }
 
   function renderCartItem(item: CartItem) {
+    const lineTotal = roundMoney(item.price * item.quantity);
     return (
-      <Card key={item.mealId} className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+      <Card key={item.mealId} className="space-y-3">
+        <div className="flex items-start gap-3">
           <div
-            className="h-16 w-16 shrink-0 rounded-lg bg-gradient-to-br from-orange-100 to-amber-100"
+            className="h-14 w-14 shrink-0 rounded-lg bg-gradient-to-br from-orange-100 to-amber-100 sm:h-16 sm:w-16"
             style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
           />
-          <div className="min-w-0">
-            <p className="truncate font-medium">{item.name}</p>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 font-medium leading-snug">{item.name}</p>
             <p className="truncate text-sm text-slate-600">{item.providerName}</p>
             <p className="text-sm text-emerald-700">{formatMoney(item.price)}</p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button size="icon" variant="outline" onClick={() => decrementCartItem(item.mealId)} aria-label="Decrease quantity">
-            <Minus className="size-4" />
-          </Button>
-          <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
-          <Button size="icon" variant="outline" onClick={() => incrementCartItem(item.mealId)} aria-label="Increase quantity">
-            <Plus className="size-4" />
-          </Button>
-          <Button size="icon" variant="destructive" onClick={() => removeCartItem(item.mealId)} aria-label="Remove item">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="text-rose-600 hover:text-rose-700"
+            onClick={() => removeCartItem(item.mealId)}
+            aria-label="Remove item"
+          >
             <Trash2 className="size-4" />
           </Button>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="rounded-r-none"
+              onClick={() => decrementCartItem(item.mealId)}
+              aria-label="Decrease quantity"
+            >
+              <Minus className="size-4" />
+            </Button>
+            <span className="w-10 text-center text-sm font-semibold">{item.quantity}</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="rounded-l-none"
+              onClick={() => incrementCartItem(item.mealId)}
+              aria-label="Increase quantity"
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+          <p className="text-sm font-semibold text-emerald-700">{formatMoney(lineTotal)}</p>
         </div>
       </Card>
     );
@@ -164,10 +186,10 @@ export default function CartPage() {
   }
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-6">
+    <div className="space-y-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:pb-6">
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h1 className="text-2xl font-semibold">Your Cart</h1>
             <Button variant="ghost" onClick={() => clearCart()}>
               Clear cart
@@ -186,7 +208,7 @@ export default function CartPage() {
           {multiProvider && (
             <Alert variant="warning">
               <AlertTitle>Multiple providers in cart</AlertTitle>
-              <AlertDescription>
+              <AlertDescription className="break-words">
                 Your cart has items from multiple providers. You may need to place separate orders.
               </AlertDescription>
               <Button
@@ -212,23 +234,61 @@ export default function CartPage() {
             ) : moreFromProvider.length === 0 ? (
               <p className="text-sm text-slate-600">No additional meals found for this provider.</p>
             ) : (
-              <div className="grid auto-cols-[220px] grid-flow-col gap-3 overflow-x-auto pb-1">
-                {moreFromProvider.map((meal) => (
-                  <Card key={meal.id} className="space-y-2 p-3">
-                    <div
-                      className="h-24 rounded-lg bg-gradient-to-br from-orange-100 via-amber-50 to-rose-100"
-                      style={meal.imageUrl ? { backgroundImage: `url(${meal.imageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
-                    />
-                    <p className="line-clamp-1 font-medium">{meal.name ?? meal.title ?? "Meal"}</p>
-                    <p className="text-xs text-slate-500">{meal.provider?.name ?? "Provider"}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-emerald-700">{formatMoney(Number(meal.price ?? 0))}</span>
-                      <Button size="sm" onClick={() => handleQuickAdd(meal)}>
-                        Add
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+              <div className="relative -mx-4 px-4">
+                <div
+                  className="
+                    grid grid-flow-col gap-4
+                    auto-cols-[80%] sm:auto-cols-[260px] md:auto-cols-[240px] lg:auto-cols-[280px]
+                    overflow-x-auto pb-2 pr-4
+                    snap-x snap-mandatory
+                    scroll-smooth
+                    [scrollbar-width:none]
+                    [&::-webkit-scrollbar]:hidden
+                  "
+                >
+                  {moreFromProvider.map((meal) => (
+                    <Card
+                      key={meal.id}
+                      className="
+                        min-w-0 snap-start
+                        p-4 rounded-2xl
+                        border border-slate-200/60
+                        shadow-sm transition-all duration-300
+                        bg-white
+                        hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]
+                      "
+                    >
+                      <div
+                        className="h-40 rounded-xl bg-gradient-to-br from-orange-100 via-amber-50 to-rose-100 bg-cover bg-center"
+                        style={meal.imageUrl ? { backgroundImage: `url(${meal.imageUrl})` } : undefined}
+                      />
+
+                      <div className="mt-3 space-y-1">
+                        <p className="line-clamp-1 text-base font-semibold">
+                          {meal.name ?? meal.title ?? "Meal"}
+                        </p>
+
+                        <p className="text-sm text-slate-500">
+                          {meal.provider?.name ?? "Provider"}
+                        </p>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className="text-base font-bold text-emerald-700">
+                          {formatMoney(Number(meal.price ?? 0))}
+                        </span>
+
+                        <Button
+                          size="sm"
+                          className="h-11 rounded-full px-4"
+                          onClick={() => handleQuickAdd(meal)}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
           </Card>
@@ -263,13 +323,15 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-white/95 p-3 shadow-lg backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-lg backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div>
             <p className="text-xs text-slate-500">Total</p>
             <p className="font-semibold text-emerald-700">{formatMoney(total)}</p>
           </div>
-          <Button onClick={handleProceedCheckout}>Proceed to Checkout</Button>
+          <Button className="h-11 shrink-0 px-4" onClick={handleProceedCheckout}>
+            Proceed to Checkout
+          </Button>
         </div>
       </div>
     </div>

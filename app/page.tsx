@@ -3,25 +3,28 @@ import { ArrowRight, ChefHat, Clock3, ShieldCheck } from "lucide-react";
 import { CategoryCard, MealCard, ProviderCard } from "@/components/home";
 import { Badge, Button, Input } from "@/components/ui";
 import { config } from "@/lib/config";
-import type { Meal, Provider } from "@/types";
+import type { Category, Meal, Provider } from "@/types";
 
-const categories = ["Bangla", "Fast Food", "Chinese", "Healthy", "Desserts", "Drinks"];
+function extractList<T>(body: unknown): T[] {
+  if (body && typeof body === "object" && "data" in (body as Record<string, unknown>)) {
+    const first = (body as { data?: unknown }).data;
+    if (Array.isArray(first)) return first as T[];
+    if (first && typeof first === "object" && "data" in (first as Record<string, unknown>)) {
+      const second = (first as { data?: unknown }).data;
+      if (Array.isArray(second)) return second as T[];
+    }
+  }
+  return Array.isArray(body) ? (body as T[]) : [];
+}
 
 async function getFeaturedMeals(): Promise<Meal[]> {
   try {
-    const response = await fetch(`${config.apiBaseUrl}/api/v1/meals?featured=true`, {
+    const response = await fetch(`${config.apiBaseUrl}/api/v1/meals?limit=6`, {
       next: { revalidate: 120 },
     });
     if (!response.ok) return [];
     const body = (await response.json()) as unknown;
-    const raw =
-      body && typeof body === "object" && "data" in (body as Record<string, unknown>)
-        ? (body as { data?: unknown }).data
-        : body;
-    if (raw && typeof raw === "object" && "data" in (raw as Record<string, unknown>)) {
-      return (((raw as { data?: Meal[] }).data ?? []).slice(0, 6) as Meal[]);
-    }
-    return (Array.isArray(raw) ? raw : []).slice(0, 6) as Meal[];
+    return extractList<Meal>(body).slice(0, 6);
   } catch {
     return [];
   }
@@ -34,18 +37,31 @@ async function getTopProviders(): Promise<Provider[]> {
     });
     if (!response.ok) return [];
     const body = (await response.json()) as unknown;
-    const providers =
-      body && typeof body === "object" && "data" in (body as Record<string, unknown>)
-        ? ((body as { data?: Provider[] }).data ?? [])
-        : ((Array.isArray(body) ? body : []) as Provider[]);
-    return providers.slice(0, 4);
+    return extractList<Provider>(body).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
+async function getCategories(): Promise<Category[]> {
+  try {
+    const response = await fetch(`${config.apiBaseUrl}/api/v1/categories`, {
+      next: { revalidate: 300 },
+    });
+    if (!response.ok) return [];
+    const body = (await response.json()) as unknown;
+    return extractList<Category>(body).slice(0, 6);
   } catch {
     return [];
   }
 }
 
 export default async function HomePage() {
-  const [featuredMeals, topProviders] = await Promise.all([getFeaturedMeals(), getTopProviders()]);
+  const [featuredMeals, topProviders, categories] = await Promise.all([
+    getFeaturedMeals(),
+    getTopProviders(),
+    getCategories(),
+  ]);
 
   return (
     <div className="space-y-14 py-3">
@@ -98,22 +114,42 @@ export default async function HomePage() {
       <section className="fade-up space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl">Browse Categories</h2>
-          <Link href="/meals" className="text-sm font-semibold text-emerald-700">
+          <Link
+            href="/meals"
+            className="inline-flex h-10 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+          >
             View all
+            <ArrowRight className="size-4" />
           </Link>
         </div>
         <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
-            <CategoryCard key={category} name={category} href={`/meals?category=${encodeURIComponent(category)}`} />
+            <CategoryCard
+              key={category.id}
+              name={category.name}
+              href={`/meals?category=${encodeURIComponent(category.name)}`}
+            />
           ))}
+          {categories.length === 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+              <p>Categories are not available right now.</p>
+              <Button asChild variant="outline" size="sm" className="mt-3">
+                <Link href="/meals">Browse all meals</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
       <section className="fade-up space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl">Featured Meals</h2>
-          <Link href="/meals" className="text-sm font-semibold text-emerald-700">
+          <Link
+            href="/meals"
+            className="inline-flex h-10 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+          >
             Browse all
+            <ArrowRight className="size-4" />
           </Link>
         </div>
         <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -121,9 +157,12 @@ export default async function HomePage() {
             <MealCard key={meal.id} meal={meal} />
           ))}
           {featuredMeals.length === 0 && (
-            <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
-              Featured meals are not available right now.
-            </p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+              <p>Featured meals are not available right now.</p>
+              <Button asChild variant="outline" size="sm" className="mt-3">
+                <Link href="/meals">Browse all meals</Link>
+              </Button>
+            </div>
           )}
         </div>
       </section>
@@ -131,8 +170,12 @@ export default async function HomePage() {
       <section className="fade-up space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl">Top Providers</h2>
-          <Link href="/providers" className="text-sm font-semibold text-emerald-700">
+          <Link
+            href="/providers"
+            className="inline-flex h-10 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+          >
             Explore providers
+            <ArrowRight className="size-4" />
           </Link>
         </div>
         <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -147,6 +190,14 @@ export default async function HomePage() {
               }}
             />
           ))}
+          {topProviders.length === 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+              <p>Providers are not available right now.</p>
+              <Button asChild variant="outline" size="sm" className="mt-3">
+                <Link href="/providers">Explore providers</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 

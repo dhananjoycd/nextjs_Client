@@ -12,3 +12,4 @@ export * from "@/components/ui/sheet";
 export * from "@/components/ui/sonner";
 export * from "@/components/ui/separator";
 export * from "@/components/ui/alert";
+export * from "@/components/ui/pagination";
