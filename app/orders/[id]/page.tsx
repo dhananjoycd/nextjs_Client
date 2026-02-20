@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Protected } from "@/components/Protected";
 import { useAuth } from "@/components/AuthProvider";
@@ -12,6 +12,7 @@ import { ordersService, reviewsService } from "@/services";
 import type { Order } from "@/types";
 
 const steps = ["PENDING", "ACCEPTED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
+const LIVE_REFRESH_MS = 5_000;
 
 function statusClass(status: string) {
   if (status === "DELIVERED") return "bg-emerald-50 text-emerald-700";
@@ -20,32 +21,64 @@ function statusClass(status: string) {
   return "bg-sky-50 text-sky-700";
 }
 
+function formatDateTime(value?: string) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
 export default function OrderDetailsPage() {
   const params = useParams<{ id: string }>();
   const { token } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState("");
   const [reviewRatings, setReviewRatings] = useState<Record<string, number>>({});
   const [reviewComments, setReviewComments] = useState<Record<string, string>>({});
   const [reviewingMealId, setReviewingMealId] = useState("");
   const [submittedMealIds, setSubmittedMealIds] = useState<Record<string, true>>({});
+  const lastStatusRef = useRef<string>("");
 
-  const fetchDetails = useCallback(async () => {
+  const fetchDetails = useCallback(async (silent = false) => {
     if (!token || !params.id) return;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await ordersService.details(token, params.id);
+      if (silent && lastStatusRef.current && lastStatusRef.current !== data.status) {
+        toast.success(`Order status updated: ${data.status}`);
+      }
+      lastStatusRef.current = data.status;
       setOrder(data);
+      setLastUpdated(new Date().toLocaleTimeString());
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to load order");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [params.id, token]);
 
   useEffect(() => {
     void fetchDetails();
   }, [fetchDetails]);
+
+  useEffect(() => {
+    if (!token || !params.id) return;
+    const timer = window.setInterval(() => {
+      void fetchDetails(true);
+    }, LIVE_REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [fetchDetails, params.id, token]);
+
+  async function refreshDetails() {
+    try {
+      setRefreshing(true);
+      await fetchDetails(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const currentStep = useMemo(() => {
     if (!order) return -1;
@@ -85,10 +118,20 @@ export default function OrderDetailsPage() {
           <div>
             <h1 className="text-2xl">Order Details</h1>
             <p className="text-sm text-slate-600">Order id: {params.id}</p>
+            <p className="text-xs text-slate-500">
+              Live refresh every {LIVE_REFRESH_MS / 1000}s
+              {lastUpdated ? ` - Last update ${lastUpdated}` : ""}
+            </p>
           </div>
-          <Button variant="secondary" asChild>
-            <Link href="/orders">Back to orders</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={refreshDetails} disabled={refreshing}>
+              {refreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              Refresh
+            </Button>
+            <Button variant="secondary" asChild>
+              <Link href="/orders">Back to orders</Link>
+            </Button>
+          </div>
         </Card>
 
         {loading ? (
@@ -102,6 +145,12 @@ export default function OrderDetailsPage() {
                 <p className="font-semibold">Current Status</p>
                 <Badge className={statusClass(order.status)}>{order.status}</Badge>
               </div>
+              <p className="text-sm text-slate-600">
+                Schedule:{" "}
+                {order.scheduleType === "LATER"
+                  ? `Later (${formatDateTime(order.scheduledAt)})`
+                  : "Deliver now"}
+              </p>
               <div className="space-y-3">
                 {steps.map((step, index) => {
                   const isComplete = currentStep >= index;

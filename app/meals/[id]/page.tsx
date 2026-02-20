@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { apiRequest } from "@/lib/api";
-import { addMealToCart } from "@/lib/cart";
 import { cartService } from "@/services";
 import type { Meal } from "@/types";
 
@@ -85,13 +85,19 @@ export default function MealDetailsPage() {
           onClick={async () => {
             try {
               setMessage("");
-              if (token && user?.role === "CUSTOMER") {
-                await cartService.add(token, { mealId: meal.id, quantity: 1 });
-                setMessage("Added to cart.");
+              if (!token) {
+                setMessage("Please login as customer to order meals.");
+                toast.error("Please login as customer to order meals");
                 return;
               }
-              addMealToCart(meal);
-              setMessage("Saved locally. Login as customer and sync from cart page.");
+              if (user?.role !== "CUSTOMER") {
+                setMessage("Only customer accounts can place orders.");
+                toast.error("Only customer accounts can place orders");
+                return;
+              }
+
+              await cartService.add(token, { mealId: meal.id, quantity: 1 });
+              setMessage("Added to cart.");
             } catch (err) {
               setMessage(err instanceof Error ? err.message : "Failed to add to cart.");
             }

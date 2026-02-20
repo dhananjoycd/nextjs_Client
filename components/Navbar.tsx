@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, ShoppingBag, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import {
+  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,11 @@ const customerLinks = [
   { href: "/orders", label: "Orders" },
   { href: "/profile", label: "Profile" },
 ];
+
+function isLinkActive(pathname: string, href: string) {
+  const [path] = href.split("#");
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
 
 function NavLink({
   href,
@@ -63,16 +69,17 @@ export function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const roleLinks =
+  const navLinks =
     user?.role === "CUSTOMER"
-      ? customerLinks
+      ? [...guestLinks, ...customerLinks]
       : user?.role === "PROVIDER"
-        ? [{ href: "/provider/dashboard", label: "Provider" }]
+        ? [
+            { href: "/provider/dashboard", label: "Provider Dashboard" },
+            { href: "/meals", label: "Meals" },
+          ]
         : user?.role === "ADMIN"
-          ? [{ href: "/admin", label: "Admin" }]
-          : [];
-
-  const navLinks = [...guestLinks, ...roleLinks];
+          ? [{ href: "/admin", label: "Admin Dashboard" }]
+          : guestLinks;
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/75 backdrop-blur-lg">
@@ -87,7 +94,7 @@ export function Navbar() {
         <div className="hidden items-center gap-6 md:flex">
           {navLinks.map((link) => (
             <div className="group" key={link.href}>
-              <NavLink href={link.href} label={link.label} active={pathname === link.href} />
+              <NavLink href={link.href} label={link.label} active={isLinkActive(pathname, link.href)} />
             </div>
           ))}
         </div>
@@ -107,6 +114,9 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="sm">
                   <UserCircle2 className="size-4" />
+                  <Badge className="px-1.5 py-0 text-[10px] uppercase">
+                    {user.role}
+                  </Badge>
                   {user.name}
                 </Button>
               </DropdownMenuTrigger>
@@ -155,7 +165,7 @@ export function Navbar() {
                   href={link.href}
                   className={cn(
                     "rounded-lg px-3 py-2 text-sm font-medium",
-                    pathname === link.href
+                    isLinkActive(pathname, link.href)
                       ? "bg-emerald-50 text-emerald-700"
                       : "text-slate-700 hover:bg-slate-100",
                   )}

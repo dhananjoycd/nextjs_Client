@@ -8,6 +8,8 @@ export const ordersService = {
       deliveryAddress: string;
       note?: string;
       paymentMethod?: "COD" | "STRIPE" | string;
+      scheduleType?: "NOW" | "LATER";
+      scheduledAt?: string;
     },
   ) {
     return apiRequest<Order>("/api/v1/orders", {

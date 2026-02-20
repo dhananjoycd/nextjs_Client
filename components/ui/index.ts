@@ -10,3 +10,5 @@ export * from "@/components/ui/dialog";
 export * from "@/components/ui/dropdown-menu";
 export * from "@/components/ui/sheet";
 export * from "@/components/ui/sonner";
+export * from "@/components/ui/separator";
+export * from "@/components/ui/alert";

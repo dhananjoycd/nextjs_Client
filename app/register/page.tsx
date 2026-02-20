@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { Loader2, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
@@ -13,6 +13,7 @@ import { getRoleHomePath } from "@/lib/auth";
 export default function RegisterPage() {
   const { register, user } = useAuth();
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -105,12 +106,20 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
                   <Input
-                    className="pl-9"
-                    type="password"
+                    className="pl-9 pr-10"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Create password"
                     value={field.state.value}
                     onChange={(event) => field.handleChange(event.target.value)}
                   />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2 rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
                 </div>
                 {field.state.meta.errors[0] && <p className="text-xs text-rose-600">{field.state.meta.errors[0]}</p>}
               </div>

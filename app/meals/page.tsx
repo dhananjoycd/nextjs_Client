@@ -1,68 +1,85 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MealCard } from "@/components/home";
+import { useRouter } from "next/navigation";
+import { ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/components/AuthProvider";
 import { Badge, Button, Card, Input, Skeleton } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
+import { addMealToCart } from "@/lib/cart";
+import { formatMoney } from "@/lib/money";
 import type { Meal } from "@/types";
 
-const PAGE_SIZE = 8;
-
-type FilterState = {
-  query: string;
-  category: string;
-  cuisine: string;
-  dietary: string;
-  provider: string;
-  minPrice: string;
-  maxPrice: string;
-};
-
-function normalize(value: unknown) {
-  return String(value ?? "").trim().toLowerCase();
-}
-
-function toTextList(value: unknown): string[] {
+function toTagList(value: unknown): string[] {
   if (!value) return [];
   if (Array.isArray(value)) {
-    return value
-      .flatMap((item) => toTextList(item))
-      .filter(Boolean);
+    return value.flatMap((item) => toTagList(item));
   }
   if (typeof value === "object") {
-    const maybeRecord = value as Record<string, unknown>;
-    if (typeof maybeRecord.name === "string") return [normalize(maybeRecord.name)];
-    if (typeof maybeRecord.label === "string") return [normalize(maybeRecord.label)];
+    const record = value as Record<string, unknown>;
+    if (typeof record.name === "string") return [record.name];
+    if (typeof record.label === "string") return [record.label];
     return [];
   }
-  return [normalize(value)];
+
+  return [String(value)];
+}
+
+function mealTags(meal: Meal): string[] {
+  const unique = new Set(
+    [
+      ...toTagList(meal.tags),
+      ...toTagList(meal.cuisine),
+      ...toTagList(meal.dietary),
+      ...toTagList(meal.dietaryPreferences),
+    ]
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+
+  return Array.from(unique).slice(0, 3);
+}
+
+function mealCategory(meal: Meal): string {
+  if (!meal.category) return "";
+  if (typeof meal.category === "string") return meal.category.trim();
+  return String(meal.category.name ?? meal.category.slug ?? "").trim();
+}
+
+function mealDietaryTags(meal: Meal): string[] {
+  const unique = new Set(
+    [
+      ...toTagList(meal.dietary),
+      ...toTagList(meal.dietaryPreferences),
+      ...toTagList(meal.tags),
+    ]
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+  return Array.from(unique);
 }
 
 export default function MealsPage() {
-  const [allMeals, setAllMeals] = useState<Meal[]>([]);
+  const router = useRouter();
+  const { user } = useAuth();
+  const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState("newest");
-  const [filters, setFilters] = useState<FilterState>({
-    query: "",
-    category: "",
-    cuisine: "",
-    dietary: "",
-    provider: "",
-    minPrice: "",
-    maxPrice: "",
-  });
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [dietaryFilter, setDietaryFilter] = useState("ALL");
+  const [minPriceFilter, setMinPriceFilter] = useState("");
+  const [maxPriceFilter, setMaxPriceFilter] = useState("");
 
   const fetchMeals = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await apiRequest<Meal[]>("/api/v1/meals");
-      setAllMeals(Array.isArray(data) ? data : []);
+      const data = await apiRequest<Meal[]>("/api/v1/meals?limit=100");
+      setMeals(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load meals");
+      setMeals([]);
     } finally {
       setLoading(false);
     }
@@ -72,122 +89,84 @@ export default function MealsPage() {
     void fetchMeals();
   }, [fetchMeals]);
 
-  const filtered = useMemo(() => {
-    const minCandidate = Number(filters.minPrice);
-    const maxCandidate = Number(filters.maxPrice);
-    const min = Number.isFinite(minCandidate) ? minCandidate : 0;
-    const max = Number.isFinite(maxCandidate) ? maxCandidate : Number.MAX_SAFE_INTEGER;
-    const cuisineQuery = normalize(filters.cuisine);
-    const dietaryQuery = normalize(filters.dietary);
+  const preparedMeals = useMemo(
+    () =>
+      meals.map((meal) => ({
+        ...meal,
+        title: meal.name ?? meal.title ?? "Meal",
+        tags: mealTags(meal),
+        categoryLabel: mealCategory(meal),
+        dietaryTags: mealDietaryTags(meal),
+        providerName: meal.provider?.name ?? "Provider",
+      })),
+    [meals],
+  );
 
-    const list = allMeals.filter((meal) => {
-      const name = normalize(meal.name ?? meal.title);
-      const category = (
-        typeof meal.category === "string"
-          ? meal.category
-          : (meal.category?.name ?? "")
-      );
-      const description = normalize(meal.description);
-      const provider = normalize(meal.provider?.name);
-      const cuisines = [
-        ...toTextList(meal.cuisine),
-        ...toTextList((meal as Meal & { cuisines?: unknown }).cuisines),
-        ...toTextList((meal as Meal & { provider?: { cuisine?: unknown } }).provider?.cuisine),
-      ];
-      const dietaryPreferences = [
-        ...toTextList(meal.dietary),
-        ...toTextList(meal.dietaryPreferences),
-        ...toTextList((meal as Meal & { dietaryPreference?: unknown }).dietaryPreference),
-        ...toTextList(meal.tags),
-      ];
+  const categoryOptions = useMemo(() => {
+    const values = new Set<string>();
+    for (const meal of preparedMeals) {
+      if (meal.categoryLabel) values.add(meal.categoryLabel);
+    }
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [preparedMeals]);
 
-      if (filters.query && !name.includes(normalize(filters.query))) return false;
-      if (filters.category && normalize(category) !== normalize(filters.category)) return false;
+  const dietaryOptions = useMemo(() => {
+    const values = new Set<string>();
+    for (const meal of preparedMeals) {
+      for (const tag of meal.dietaryTags) values.add(tag);
+    }
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [preparedMeals]);
+
+  const filteredMeals = useMemo(() => {
+    const minPrice = minPriceFilter.trim() ? Number(minPriceFilter) : undefined;
+    const maxPrice = maxPriceFilter.trim() ? Number(maxPriceFilter) : undefined;
+
+    return preparedMeals.filter((meal) => {
+      if (categoryFilter !== "ALL" && meal.categoryLabel !== categoryFilter) return false;
       if (
-        cuisineQuery &&
-        !cuisines.some((value) => value.includes(cuisineQuery)) &&
-        !description.includes(cuisineQuery)
+        dietaryFilter !== "ALL" &&
+        !meal.dietaryTags.some((tag) => tag.toLowerCase() === dietaryFilter.toLowerCase())
       ) {
         return false;
       }
-      if (
-        dietaryQuery &&
-        !dietaryPreferences.some((value) => value.includes(dietaryQuery)) &&
-        !description.includes(dietaryQuery)
-      ) {
-        return false;
-      }
-      if (filters.provider && !provider.includes(normalize(filters.provider))) return false;
-      if (Number(meal.price) < min || Number(meal.price) > max) return false;
+
+      const price = Number(meal.price ?? 0);
+      if (minPrice !== undefined && Number.isFinite(minPrice) && price < minPrice) return false;
+      if (maxPrice !== undefined && Number.isFinite(maxPrice) && price > maxPrice) return false;
+
       return true;
     });
-
-    if (sort === "price_asc") return list.sort((a, b) => Number(a.price) - Number(b.price));
-    if (sort === "price_desc") return list.sort((a, b) => Number(b.price) - Number(a.price));
-    return list;
-  }, [allMeals, filters, sort]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pagedMeals = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  function updateFilter(key: keyof FilterState, value: string) {
-    setPage(1);
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  }
+  }, [categoryFilter, dietaryFilter, maxPriceFilter, minPriceFilter, preparedMeals]);
 
   function clearFilters() {
-    setPage(1);
-    setFilters({
-      query: "",
-      category: "",
-      cuisine: "",
-      dietary: "",
-      provider: "",
-      minPrice: "",
-      maxPrice: "",
-    });
+    setCategoryFilter("ALL");
+    setDietaryFilter("ALL");
+    setMinPriceFilter("");
+    setMaxPriceFilter("");
+  }
+
+  function handleAddToCart(meal: Meal) {
+    if (!user) {
+      toast.error("Please login as customer to order meals");
+      return;
+    }
+    if (user.role !== "CUSTOMER") {
+      toast.error("Only customer accounts can place orders");
+      return;
+    }
+
+    addMealToCart(meal, 1);
+    toast.success("Added to cart");
+    router.push("/cart");
   }
 
   return (
-    <div className="space-y-8 py-2">
-      <section className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-100/90 via-amber-50 to-orange-100/90 p-6 shadow-lg">
-        <div className="absolute -right-14 -top-10 h-44 w-44 rounded-full bg-white/50 blur-2xl" />
-        <div className="relative flex flex-wrap items-end justify-between gap-4">
-          <div className="space-y-2">
-            <Badge className="bg-white/70 text-emerald-800">Freshly curated</Badge>
-            <h1 className="text-3xl md:text-4xl">Browse Meals</h1>
-            <p className="max-w-xl text-sm text-slate-700">
-              Discover meals from trusted providers. Filter by taste, budget, and dietary needs.
-            </p>
-          </div>
-          <div className="text-sm text-slate-700">
-            <span className="status-pill bg-white/70">{filtered.length} meals found</span>
-          </div>
-        </div>
+    <div className="space-y-6 py-2">
+      <section className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-100 via-amber-50 to-orange-100 p-6">
+        <h1 className="text-3xl md:text-4xl">Meals</h1>
+        <p className="mt-2 text-sm text-slate-700">Discover delicious meals and start your order in one click.</p>
       </section>
-
-      <Card className="space-y-4 border-emerald-100 bg-white/95">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl">Filter Meals</h2>
-          <select className="field max-w-[240px]" value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="newest">Sort: Newest</option>
-            <option value="price_asc">Sort: Price Low to High</option>
-            <option value="price_desc">Sort: Price High to Low</option>
-          </select>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Input placeholder="Search meal name" value={filters.query} onChange={(e) => updateFilter("query", e.target.value)} />
-          <Input placeholder="Category" value={filters.category} onChange={(e) => updateFilter("category", e.target.value)} />
-          <Input placeholder="Cuisine" value={filters.cuisine} onChange={(e) => updateFilter("cuisine", e.target.value)} />
-          <Input placeholder="Dietary" value={filters.dietary} onChange={(e) => updateFilter("dietary", e.target.value)} />
-          <Input placeholder="Provider" value={filters.provider} onChange={(e) => updateFilter("provider", e.target.value)} />
-          <Input placeholder="Min price" value={filters.minPrice} onChange={(e) => updateFilter("minPrice", e.target.value)} />
-          <Input placeholder="Max price" value={filters.maxPrice} onChange={(e) => updateFilter("maxPrice", e.target.value)} />
-          <Button variant="outline" onClick={clearFilters}>
-            Reset Filters
-          </Button>
-        </div>
-      </Card>
 
       {loading && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -198,82 +177,106 @@ export default function MealsPage() {
                 <Skeleton className="h-5 w-2/3" />
                 <Skeleton className="h-4 w-1/2" />
                 <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-9 w-28" />
+                <Skeleton className="h-10 w-full" />
               </div>
             </Card>
           ))}
         </div>
       )}
 
-      {!loading && !error && pagedMeals.length > 0 && (
+      {!loading && error && (
+        <Card className="space-y-3 border-rose-200 bg-rose-50">
+          <p className="text-sm text-rose-700">{error}</p>
+          <Button onClick={fetchMeals}>Retry</Button>
+        </Card>
+      )}
+
+      {!loading && !error && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {pagedMeals.map((meal) => (
-              <MealCard
-                key={meal.id}
-                meal={{
-                  id: meal.id,
-                  name: meal.name,
-                  title: meal.title,
-                  imageUrl: meal.imageUrl,
-                  price: meal.price,
-                  rating: (meal as Meal & { rating?: number }).rating,
-                  provider: meal.provider
-                    ? { id: meal.provider.id, name: meal.provider.name }
-                    : undefined,
-                }}
+          <Card className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold">Filter Meals</h2>
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <select className="field" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                <option value="ALL">All cuisines/categories</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              <select className="field" value={dietaryFilter} onChange={(e) => setDietaryFilter(e.target.value)}>
+                <option value="ALL">All dietary</option>
+                {dietaryOptions.map((dietary) => (
+                  <option key={dietary} value={dietary}>
+                    {dietary}
+                  </option>
+                ))}
+              </select>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Min price"
+                value={minPriceFilter}
+                onChange={(e) => setMinPriceFilter(e.target.value)}
               />
-            ))}
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Max price"
+                value={maxPriceFilter}
+                onChange={(e) => setMaxPriceFilter(e.target.value)}
+              />
+            </div>
+            <p className="text-sm text-slate-600">{filteredMeals.length} meals found</p>
+          </Card>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredMeals.map((meal) => (
+            <Card key={meal.id} className="overflow-hidden p-0">
+              <div
+                className="h-40 bg-gradient-to-br from-orange-100 via-amber-50 to-rose-100"
+                style={meal.imageUrl ? { backgroundImage: `url(${meal.imageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+              />
+              <div className="space-y-3 p-4">
+                <div>
+                  <h2 className="text-lg font-semibold">{meal.title}</h2>
+                  <p className="text-sm text-slate-600">{meal.providerName}</p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {meal.tags.length > 0 ? (
+                    meal.tags.map((tag) => (
+                      <Badge key={`${meal.id}-${tag}`}>
+                        {tag}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge>Popular</Badge>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-emerald-700">{formatMoney(Number(meal.price ?? 0))}</p>
+                </div>
+                <Button className="w-full" onClick={() => handleAddToCart(meal)}>
+                  <ShoppingCart className="size-4" /> Add to cart
+                </Button>
+              </div>
+            </Card>
+          ))}
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Prev
-            </Button>
-            <span className="status-pill bg-white">Page {page}</span>
-            <span className="text-sm text-slate-600">of {totalPages}</span>
-            <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-              Next
-            </Button>
-          </div>
+          {filteredMeals.length === 0 && (
+            <Card>
+              <p className="text-sm text-slate-600">No meals match current filters.</p>
+            </Card>
+          )}
         </>
       )}
-
-      {!loading && error && (
-        <Card className="space-y-3 border-red-100 bg-red-50/50">
-          <h2 className="text-xl text-red-700">Unable to load meals</h2>
-          <p className="text-sm text-red-700/80">{error}</p>
-          <Button variant="secondary" onClick={fetchMeals}>
-            Retry
-          </Button>
-        </Card>
-      )}
-
-      {!loading && !error && pagedMeals.length === 0 && (
-        <Card className="space-y-3 border-amber-100 bg-amber-50/60">
-          <h2 className="text-xl">No meals found</h2>
-          <p className="text-sm text-slate-700">Try different filters or clear all search conditions.</p>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={clearFilters}>
-              Clear Filters
-            </Button>
-            <Button variant="outline" onClick={fetchMeals}>
-              Reload
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      <section className="rounded-2xl border border-emerald-100 bg-white/80 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl">Want to explore providers directly?</h2>
-            <p className="text-sm text-slate-600">Check top kitchens and their full menu collections.</p>
-          </div>
-          <Button asChild>
-            <Link href="/providers">Explore Providers</Link>
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }

@@ -11,5 +11,5 @@ export type Meal = {
   imageUrl?: string;
   category?: string | { id?: string; name?: string; slug?: string };
   providerId?: string;
-  provider?: { id: string; name?: string };
+  provider?: { id: string; name?: string; deliveryFee?: number };
 };

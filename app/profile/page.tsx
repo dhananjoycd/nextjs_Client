@@ -21,27 +21,28 @@ export default function ProfilePage() {
     image: "",
   });
 
-  useEffect(() => {
-    async function loadProfile() {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const me = await userService.me(token);
-        setEmail(me.email ?? "");
-        setInitial({
-          name: me.name ?? "",
-          phone: me.phone ?? "",
-          address: me.address ?? "",
-          image: me.image ?? "",
-        });
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
+  async function loadProfile() {
+    if (!token) {
+      setLoading(false);
+      return;
     }
+    try {
+      const me = await userService.me(token);
+      setEmail(me.email ?? "");
+      setInitial({
+        name: me.name ?? "",
+        phone: me.phone ?? "",
+        address: me.address ?? "",
+        image: me.image ?? "",
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     void loadProfile();
   }, [token]);
 
@@ -51,11 +52,15 @@ export default function ProfilePage() {
     defaultValues: initial,
     onSubmit: async ({ value }) => {
       if (!token) throw new Error("Please login again");
-      const payload = Object.fromEntries(
-        Object.entries(value).filter(([, val]) => String(val).trim().length > 0),
-      );
+      const payload = {
+        name: value.name.trim(),
+        phone: value.phone.trim(),
+        address: value.address.trim(),
+        image: value.image.trim(),
+      };
       await userService.updateMe(token, payload);
       await refreshMe();
+      await loadProfile();
       toast.success("Profile updated successfully");
     },
   });
@@ -65,6 +70,7 @@ export default function ProfilePage() {
       <DashboardShell
         title="Profile Settings"
         description="Manage your account details and delivery profile."
+        hideNav
         links={[
           { href: "/cart", label: "Cart" },
           { href: "/orders", label: "Orders" },
