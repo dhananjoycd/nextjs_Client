@@ -317,7 +317,7 @@ export default function CheckoutPage() {
             <div key={item.mealId} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-2">
               <div className="min-w-0">
                 <p className="line-clamp-1 text-sm font-medium">{item.name}</p>
-                <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs">
+                <Button asChild variant="ghost" size="sm" className="h-auto px-0 text-xs text-emerald-700 hover:bg-transparent hover:text-emerald-800">
                   <Link href={`/meals/${item.mealId}`}>View details</Link>
                 </Button>
               </div>

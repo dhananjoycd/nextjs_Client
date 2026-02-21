@@ -176,7 +176,7 @@ export default function OrderDetailsPage() {
                     <div>
                       <p>{item.meal?.title ?? item.meal?.name ?? "Meal"}</p>
                       {item.mealId ? (
-                        <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs">
+                        <Button asChild variant="ghost" size="sm" className="h-auto px-0 text-xs text-emerald-700 hover:bg-transparent hover:text-emerald-800">
                           <Link href={`/meals/${item.mealId}`}>View details</Link>
                         </Button>
                       ) : null}

@@ -9,10 +9,13 @@
 
 ## Screenshots
 
-![Home Page](./public/screenshots/home-page.png)
-![Meals Listing](./public/screenshots/meals-page.png)
-![Checkout Flow](./public/screenshots/checkout-page.png)
-![Dashboard](./public/screenshots/dashboard-page.png)
+| Home Page                                      | Meals Listing                                       |
+| ---------------------------------------------- | --------------------------------------------------- |
+| ![Home Page](public/screenshots/home-page.png) | ![Meals Listing](public/screenshots/meals-page.png) |
+
+| Checkout Flow                                          | Dashboard                                           |
+| ------------------------------------------------------ | --------------------------------------------------- |
+| ![Checkout Flow](public/screenshots/checkout-page.png) | ![Dashboard](public/screenshots/dashboard-page.png) |
 
 ## Tech Stack
 
@@ -125,12 +128,9 @@ STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx
 
 - Watch on Google Drive: [Open Demo Video](https://drive.google.com/file/d/1fjhHG1fmYVSMQVYxoy21l22DpKnHGkCD/view?usp=sharing)
 
-<iframe
-  src="https://drive.google.com/file/d/1fjhHG1fmYVSMQVYxoy21l22DpKnHGkCD/preview"
-  width="100%"
-  height="480"
-  allow="autoplay"
-></iframe>
+[![Watch Product Walkthrough Video](public/screenshots/dashboard-page.png)](https://drive.google.com/file/d/1fjhHG1fmYVSMQVYxoy21l22DpKnHGkCD/view?usp=sharing)
+
+> Note: GitHub README blocks iframe embeds, so the video is linked via a clickable thumbnail.
 
 ## About the Developer
 

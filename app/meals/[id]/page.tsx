@@ -105,7 +105,7 @@ export default function MealDetailsPage() {
                   {averageRating.toFixed(1)} ({reviews.length} reviews)
                 </Badge>
               ) : (
-                <Badge variant="outline">No reviews yet</Badge>
+                <Badge className="bg-white">No reviews yet</Badge>
               )}
             </div>
 
