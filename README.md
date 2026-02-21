@@ -1,151 +1,139 @@
-# FoodHub Frontend
+# FoodHub
 
-FoodHub is a Next.js (App Router) frontend for a multi-vendor meal ordering platform.
+**Production-ready full-stack meal ordering platform focused on performance, scalability, and conversion-driven UX.**
+
+## Live Demo
+
+- Frontend (Web App): [FoodHub Live](https://foodhub.app)
+- Backend (API): [FoodHub API](https://foodhub-server-api-sigma.vercel.app/)
+
+## Screenshots
+
+![Home Page](./public/screenshots/home-page.png)
+![Meals Listing](./public/screenshots/meals-page.png)
+![Checkout Flow](./public/screenshots/checkout-page.png)
+![Dashboard](./public/screenshots/dashboard-page.png)
 
 ## Tech Stack
 
+### Frontend
+
 - Next.js (App Router)
-- React
-- TypeScript
+- React + TypeScript
 - Tailwind CSS
-- shadcn/ui style component structure
+- ShadCN UI
+- TanStack Query
+- TanStack Form
 
-## Project Structure
+### Backend
 
-```text
-Client FoodHub/
-|-- app/
-|   |-- admin/
-|   |   `-- page.tsx
-|   |-- cart/
-|   |   `-- page.tsx
-|   |-- checkout/
-|   |   `-- page.tsx
-|   |-- login/
-|   |   `-- page.tsx
-|   |-- meals/
-|   |   |-- [id]/
-|   |   |   `-- page.tsx
-|   |   `-- page.tsx
-|   |-- order/
-|   |   `-- [id]/
-|   |       `-- page.tsx
-|   |-- orders/
-|   |   |-- [id]/
-|   |   |   `-- page.tsx
-|   |   `-- page.tsx
-|   |-- payment-success/
-|   |   `-- page.tsx
-|   |-- profile/
-|   |   `-- page.tsx
-|   |-- provider/
-|   |   `-- dashboard/
-|   |       `-- page.tsx
-|   |-- providers/
-|   |   |-- [id]/
-|   |   |   `-- page.tsx
-|   |   `-- page.tsx
-|   |-- register/
-|   |   `-- page.tsx
-|   |-- test/
-|   |   `-- page.tsx
-|   |-- favicon.ico
-|   |-- globals.css
-|   |-- layout.tsx
-|   |-- loading.tsx
-|   `-- page.tsx
-|-- components/
-|   |-- dashboard/
-|   |   `-- shell.tsx
-|   |-- home/
-|   |   |-- category-card.tsx
-|   |   |-- index.ts
-|   |   |-- meal-card.tsx
-|   |   `-- provider-card.tsx
-|   |-- layout/
-|   |   |-- container.tsx
-|   |   |-- footer.tsx
-|   |   `-- header.tsx
-|   |-- ui/
-|   |   |-- alert.tsx
-|   |   |-- badge.tsx
-|   |   |-- button.tsx
-|   |   |-- card.tsx
-|   |   |-- dialog.tsx
-|   |   |-- dropdown-menu.tsx
-|   |   |-- index.ts
-|   |   |-- input.tsx
-|   |   |-- pagination.tsx
-|   |   |-- radio-group.tsx
-|   |   |-- select.tsx
-|   |   |-- separator.tsx
-|   |   |-- sheet.tsx
-|   |   |-- skeleton.tsx
-|   |   |-- sonner.tsx
-|   |   |-- switch.tsx
-|   |   `-- textarea.tsx
-|   |-- AuthProvider.tsx
-|   |-- Navbar.tsx
-|   `-- Protected.tsx
-|-- hooks/
-|   |-- index.ts
-|   |-- use-me.ts
-|   `-- use-role-guard.ts
-|-- lib/
-|   |-- api.ts
-|   |-- auth.ts
-|   |-- cart.ts
-|   |-- config.ts
-|   |-- ids.ts
-|   |-- money.ts
-|   |-- order-store.ts
-|   |-- types.ts
-|   `-- utils.ts
-|-- public/
-|   |-- file.svg
-|   |-- globe.svg
-|   |-- next.svg
-|   |-- vercel.svg
-|   `-- window.svg
-|-- services/
-|   |-- admin.service.ts
-|   |-- auth.service.ts
-|   |-- cart.service.ts
-|   |-- categories.service.ts
-|   |-- index.ts
-|   |-- meals.service.ts
-|   |-- orders.service.ts
-|   |-- payments.service.ts
-|   |-- providers.service.ts
-|   |-- reviews.service.ts
-|   `-- user.service.ts
-|-- types/
-|   |-- cart.ts
-|   |-- category.ts
-|   |-- index.ts
-|   |-- meal.ts
-|   |-- order.ts
-|   |-- provider.ts
-|   |-- review.ts
-|   `-- user.ts
-|-- .env
-|-- .env.example
-|-- .gitignore
-|-- eslint.config.mjs
-|-- next-env.d.ts
-|-- next.config.ts
-|-- package-lock.json
-|-- package.json
-|-- postcss.config.mjs
-|-- README.md
-`-- tsconfig.json
+- Node.js
+- Express.js
+- Prisma ORM
+
+### Database
+
+- PostgreSQL
+
+### Deployment
+
+- Frontend: Vercel
+- Backend: Render / other Node-compatible cloud platform
+
+## Key Features
+
+- Role-based authentication and authorization for `Customer`, `Provider`, and `Admin`.
+- Smart cart with sticky order summary for faster and clearer checkout decisions.
+- One-page checkout flow combining delivery address, schedule, payment method, and order note.
+- Real-time-oriented order tracking with status-driven UI updates.
+- Multi-role dashboard for operational visibility, order management, and business insights.
+- Fully responsive interface across mobile, tablet, and desktop breakpoints.
+- SEO-focused implementation using App Router metadata and crawl-friendly routing.
+- Toast-driven user feedback for async actions, validation states, and API responses.
+
+## Project Architecture
+
+FoodHub uses a layered architecture to keep the codebase scalable and maintainable:
+
+- Presentation layer: Next.js route segments and reusable UI components.
+- Data access layer: service modules and typed API clients for backend communication.
+- State and async layer: TanStack Query for server-state caching and synchronization.
+- Form and validation layer: TanStack Form for predictable, type-safe form handling.
+- Backend service layer: Express controllers and domain logic backed by Prisma.
+- Persistence layer: PostgreSQL relational schema managed through Prisma migrations.
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/foodhub-client.git
+cd foodhub-client
 ```
 
-## Run Locally
+### 2. Install dependencies
 
 ```bash
 npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env.local` file in the project root using the example below.
+
+### 4. Run the development server
+
+```bash
 npm run dev
 ```
 
-App runs at `http://localhost:3000`.
+Application runs at `http://localhost:3000`.
+
+## Environment Variables
+
+```env
+# Frontend
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+
+# Authentication / Session
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+
+# Payments (example placeholders)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx
+```
+
+## Security
+
+- Uses role-based access control to restrict privileged routes and operations.
+- Keeps secrets in environment variables and excludes sensitive files from source control.
+- Enforces server-side validation for critical write operations.
+- Uses Prisma to reduce raw-query risk and enforce typed database access patterns.
+- Recommends HTTPS-only deployment and secure cookie/session policies in production.
+
+## Future Improvements
+
+- WebSocket or SSE-based live order tracking for lower-latency updates.
+- Background jobs for notifications, receipts, and provider-side automation.
+- Advanced analytics dashboard for conversion, retention, and provider performance.
+- End-to-end automated testing (Playwright + integration tests).
+- Multi-language and multi-currency support for international rollout.
+
+## Product Walkthrough Video
+
+- Watch on Google Drive: [Open Demo Video](https://drive.google.com/file/d/1fjhHG1fmYVSMQVYxoy21l22DpKnHGkCD/view?usp=sharing)
+
+<iframe
+  src="https://drive.google.com/file/d/1fjhHG1fmYVSMQVYxoy21l22DpKnHGkCD/preview"
+  width="100%"
+  height="480"
+  allow="autoplay"
+></iframe>
+
+## About the Developer
+
+**Name:** Dhananjoy Chandra Das
+**Role:** Full-Stack Developer
+**LinkedIn:** [https://www.linkedin.com/in/dhananjoycd/](https://www.linkedin.com/in/dhananjoycd/)
