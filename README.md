@@ -1,6 +1,6 @@
 # FoodHub
 
-**Production-ready full-stack meal ordering platform focused on performance, scalability, and conversion-driven UX.**
+**Full-stack meal ordering platform focused on performance, scalability, and conversion-driven UX.**
 
 ## Live Demo
 
@@ -25,7 +25,6 @@
 - React + TypeScript
 - Tailwind CSS
 - ShadCN UI
-- TanStack Query
 - TanStack Form
 
 ### Backend
@@ -60,7 +59,7 @@ FoodHub uses a layered architecture to keep the codebase scalable and maintainab
 
 - Presentation layer: Next.js route segments and reusable UI components.
 - Data access layer: service modules and typed API clients for backend communication.
-- State and async layer: TanStack Query for server-state caching and synchronization.
+- State and async layer: typed service modules and API helpers for backend communication.
 - Form and validation layer: TanStack Form for predictable, type-safe form handling.
 - Backend service layer: Express controllers and domain logic backed by Prisma.
 - Persistence layer: PostgreSQL relational schema managed through Prisma migrations.
@@ -97,11 +96,7 @@ Application runs at `http://localhost:3000`.
 ```env
 # Frontend
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
-
-# Authentication / Session
-NEXTAUTH_SECRET=your_nextauth_secret
-NEXTAUTH_URL=http://localhost:3000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
 
 # Payments (example placeholders)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
@@ -115,6 +110,7 @@ STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx
 - Enforces server-side validation for critical write operations.
 - Uses Prisma to reduce raw-query risk and enforce typed database access patterns.
 - Recommends HTTPS-only deployment and secure cookie/session policies in production.
+- Production hardening still required before public launch (payment webhooks, idempotency, E2E tests, and secure session handling).
 
 ## Future Improvements
 

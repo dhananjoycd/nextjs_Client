@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getRoleHomePath } from "@/lib/auth";
 
@@ -11,7 +11,32 @@ export function Footer() {
 
   return (
     <footer className="mt-16 border-t border-slate-800 bg-slate-950 text-slate-300">
-      <div className="mx-auto grid max-w-[1280px] gap-10 px-4 py-12 md:grid-cols-3">
+      <div className="mx-auto max-w-[1280px] px-4 py-12 sm:px-5 lg:px-6">
+        <div className="mb-10 grid gap-4 rounded-[2rem] border border-slate-800 bg-slate-900/70 p-5 shadow-[0_18px_40px_rgba(2,6,23,0.3)] md:grid-cols-[1.2fr_0.8fr] md:items-center">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">Stay in the loop</p>
+            <h2 className="text-2xl font-semibold text-white">Need help choosing meals for today?</h2>
+            <p className="text-sm text-slate-400">
+              Explore curated meals, trusted providers, and checkout support built for busy customers.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
+            <Link
+              href="/meals"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
+            >
+              Explore Meals <ArrowRight className="size-4" />
+            </Link>
+            <Link
+              href="/contact"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-700 px-4 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
+            >
+              Contact Support
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid gap-10 md:grid-cols-4">
         <div className="space-y-3">
           <p className="text-xl font-semibold text-white">FoodHub</p>
           <p className="text-sm text-slate-400">
@@ -59,6 +84,24 @@ export function Footer() {
                 </Link>
               </>
             )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Company</p>
+          <div className="space-y-2 text-sm">
+            <Link href="/about" className="block hover:text-white">
+              About Us
+            </Link>
+            <Link href="/contact" className="block hover:text-white">
+              Contact & Support
+            </Link>
+            <Link href="/privacy" className="block hover:text-white">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="block hover:text-white">
+              Terms of Service
+            </Link>
           </div>
         </div>
 
@@ -113,6 +156,7 @@ export function Footer() {
               <Instagram className="size-4" />
             </a>
           </div>
+        </div>
         </div>
       </div>
       <div className="border-t border-slate-800 py-4 text-center text-xs text-slate-500">

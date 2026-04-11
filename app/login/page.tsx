@@ -4,14 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Facebook, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card, Input } from "@/components/ui";
 import { getRoleHomePath } from "@/lib/auth";
 
+const demoUsers = [
+  { label: "Customer Demo", email: "customer@foodhub.app", password: "Pass1234!" },
+  { label: "Provider Demo", email: "provider@foodhub.app", password: "Pass1234!" },
+  { label: "Admin Demo", email: "admin@foodhub.app", password: "Pass1234!" },
+] as const;
+
 export default function LoginPage() {
-  const { login, user } = useAuth();
+  const { login, loginWithGoogle, user } = useAuth();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -32,12 +38,60 @@ export default function LoginPage() {
     router.replace(getRoleHomePath(user.role));
   }, [router, user]);
 
+  function applyDemoCredential(email: string, password: string) {
+    form.setFieldValue("email", email);
+    form.setFieldValue("password", password);
+    toast.success("Demo credential added");
+  }
+
   return (
-    <div className="mx-auto max-w-md py-8">
+    <div className="mx-auto grid max-w-5xl gap-6 py-8 lg:grid-cols-[0.95fr_1.05fr]">
+      <Card className="hidden border-slate-200/80 bg-[linear-gradient(180deg,rgba(16,185,129,0.1),rgba(255,255,255,0.95))] p-7 lg:block">
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Welcome back</p>
+            <h1 className="text-4xl leading-tight">Sign in to continue your ordering flow without friction.</h1>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Track live orders, manage saved addresses, and jump back into your dashboard in seconds.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            {[
+              "Live order tracking from placement to delivery",
+              "Saved address and one-page checkout experience",
+              "Role-based dashboards for customer, provider, and admin",
+            ].map((item) => (
+              <div key={item} className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
       <Card className="space-y-5 border-slate-200 bg-white/95 p-6">
         <div>
           <h1 className="text-3xl">Welcome back</h1>
           <p className="text-sm text-slate-600">Login to continue ordering with FoodHub.</p>
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Demo access</p>
+            <p className="text-xs text-slate-600">Click once to auto-fill credentials for fast review.</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {demoUsers.map((demo) => (
+              <Button
+                key={demo.label}
+                type="button"
+                variant="outline"
+                onClick={() => applyDemoCredential(demo.email, demo.password)}
+              >
+                {demo.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <form
@@ -118,6 +172,33 @@ export default function LoginPage() {
             )}
           </form.Subscribe>
         </form>
+
+        <div className="space-y-3">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-500">Or continue with</span>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                loginWithGoogle().catch((error) =>
+                  toast.error(error instanceof Error ? error.message : "Google login failed"),
+                );
+              }}
+            >
+              Google
+            </Button>
+            <Button type="button" variant="outline" onClick={() => toast.info("Facebook login will be connected in Phase 2 backend auth setup.")}>
+              <Facebook className="size-4" /> Facebook
+            </Button>
+          </div>
+        </div>
 
         <p className="text-sm text-slate-600">
           New to FoodHub?{" "}

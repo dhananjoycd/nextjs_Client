@@ -11,6 +11,7 @@ export async function apiRequest<T>(
   const { token, headers, ...rest } = options;
   const response = await fetch(`${config.apiBaseUrl}${endpoint}`, {
     ...rest,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

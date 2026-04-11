@@ -28,4 +28,19 @@ export const authService = {
   me(token: string) {
     return apiRequest<User>("/api/v1/auth/me", { token });
   },
+  session() {
+    return apiRequest<User>("/api/v1/auth/me");
+  },
+  logout(token?: string | null) {
+    return apiRequest<{ success: boolean }>("/api/v1/auth/logout", {
+      method: "POST",
+      token: token ?? undefined,
+    });
+  },
+  googleLogin(callbackURL: string) {
+    return apiRequest<{ url: string; redirect: boolean }>("/api/v1/auth/google-login", {
+      method: "POST",
+      body: JSON.stringify({ callbackURL }),
+    });
+  },
 };

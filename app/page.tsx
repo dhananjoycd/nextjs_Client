@@ -82,6 +82,46 @@ const trustItems = [
   { label: "Safe checkout", value: "100% secure", icon: ShieldCheck },
 ] as const;
 
+const highlightStats = [
+  { label: "Meals listed", value: "250+" },
+  { label: "Verified providers", value: "60+" },
+  { label: "Orders delivered", value: "12k+" },
+  { label: "Average rating", value: "4.8/5" },
+] as const;
+
+const testimonials = [
+  {
+    name: "Nusrat Jahan",
+    role: "Customer",
+    text: "FoodHub made it easy to compare meals and checkout quickly without jumping across multiple pages.",
+  },
+  {
+    name: "Rahim Ahmed",
+    role: "Provider",
+    text: "The provider dashboard gives me one place to manage orders, menu items, and delivery progress.",
+  },
+  {
+    name: "Tanvir Hasan",
+    role: "Repeat customer",
+    text: "The search and category browsing flow helped me find healthy lunch options in just a few clicks.",
+  },
+] as const;
+
+const faqs = [
+  {
+    title: "Can I order from multiple providers?",
+    text: "Yes. FoodHub supports marketplace-style ordering and calculates delivery fee based on participating providers.",
+  },
+  {
+    title: "Do providers update order status live?",
+    text: "Yes. Customers can revisit their order details page to follow status updates from pending to delivered.",
+  },
+  {
+    title: "Is FoodHub mobile friendly?",
+    text: "The interface is designed to stay smooth across mobile, tablet, and desktop breakpoints.",
+  },
+] as const;
+
 export default async function HomePage() {
   const [featuredMeals, topProviders, categories, allMealsForStats] = await Promise.all([
     getFeaturedMeals(),
@@ -321,6 +361,97 @@ export default async function HomePage() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="fade-up space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl md:text-3xl">Platform Highlights</h2>
+          <Badge className="bg-sky-100 text-sky-700">Operational Snapshot</Badge>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {highlightStats.map((item) => (
+            <article key={item.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">{item.label}</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{item.value}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="fade-up grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Why teams use FoodHub</p>
+          <h2 className="mt-3 text-2xl md:text-3xl">Designed to support discovery, checkout, and fulfillment in one flow.</h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {[
+              "Conversion-focused hero and listing pages",
+              "Role-based dashboards for operations",
+              "One-page checkout with schedule and note support",
+              "Order reviews and provider management tools",
+            ].map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+                {item}
+              </div>
+            ))}
+          </div>
+        </article>
+        <article className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-white p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Today&apos;s offer</p>
+          <h2 className="mt-3 text-2xl">Free discovery, faster checkout, and provider visibility.</h2>
+          <p className="mt-3 text-sm text-slate-600">
+            FoodHub is built to reduce friction for both customers and kitchens through cleaner catalog browsing and action-focused design.
+          </p>
+          <Button asChild className="mt-5">
+            <Link href="/providers">Meet Providers</Link>
+          </Button>
+        </article>
+      </section>
+
+      <section className="fade-up space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl md:text-3xl">Customer Stories</h2>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/about">Learn about FoodHub</Link>
+          </Button>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {testimonials.map((item) => (
+            <article key={item.name} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm leading-relaxed text-slate-700">&ldquo;{item.text}&rdquo;</p>
+              <div className="mt-4">
+                <p className="font-semibold text-slate-900">{item.name}</p>
+                <p className="text-xs uppercase tracking-[0.12em] text-slate-500">{item.role}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="fade-up grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Newsletter</p>
+          <h2 className="mt-3 text-2xl">Stay updated with new meals and provider launches.</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Follow FoodHub updates, feature launches, and curated weekly highlights from top providers.
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <Input placeholder="Enter your email" className="sm:flex-1" />
+            <Button asChild>
+              <Link href="/contact">Get Updates</Link>
+            </Button>
+          </div>
+        </article>
+        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">FAQ</p>
+          <div className="mt-3 space-y-3">
+            {faqs.map((item) => (
+              <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                <h3 className="text-lg">{item.title}</h3>
+                <p className="mt-1 text-sm text-slate-600">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </article>
       </section>
 
       <section className="fade-up rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-100 via-amber-50 to-orange-100 p-7 shadow-lg">

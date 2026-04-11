@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Facebook, Loader2, Lock, Mail, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { getRoleHomePath } from "@/lib/auth";
 
 export default function RegisterPage() {
-  const { register, user } = useAuth();
+  const { register, loginWithGoogle, user } = useAuth();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,7 +35,7 @@ export default function RegisterPage() {
   });
 
   return (
-    <div className="mx-auto max-w-md py-8">
+    <div className="mx-auto grid max-w-5xl gap-6 py-8 lg:grid-cols-[1.05fr_0.95fr]">
       <Card className="space-y-5 border-slate-200 bg-white/95 p-6">
         <div>
           <h1 className="text-3xl">Create account</h1>
@@ -153,12 +153,62 @@ export default function RegisterPage() {
           </form.Subscribe>
         </form>
 
+        <div className="space-y-3">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-500">Or start with</span>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                loginWithGoogle().catch((error) =>
+                  toast.error(error instanceof Error ? error.message : "Google signup failed"),
+                );
+              }}
+            >
+              Google
+            </Button>
+            <Button type="button" variant="outline" onClick={() => toast.info("Facebook signup will be connected in Phase 2 backend auth setup.")}>
+              <Facebook className="size-4" /> Facebook
+            </Button>
+          </div>
+        </div>
+
         <p className="text-sm text-slate-600">
           Already have an account?{" "}
           <Link href="/login" className="font-semibold text-emerald-700 hover:text-emerald-600">
             Login
           </Link>
         </p>
+      </Card>
+
+      <Card className="hidden border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,247,237,0.95),rgba(236,253,245,0.95))] p-7 lg:block">
+        <div className="space-y-5">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Build your account</p>
+            <h2 className="text-4xl leading-tight">Join a food marketplace designed for customers and providers.</h2>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Create a customer account to order faster, or choose provider access to manage your menu and incoming orders.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            {[
+              "Customer accounts get saved profile, order history, and checkout convenience.",
+              "Provider accounts unlock menu management and delivery pipeline updates.",
+              "Every account is built for responsive mobile, tablet, and desktop usage.",
+            ].map((item) => (
+              <div key={item} className="rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-sm text-slate-700 shadow-sm">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
       </Card>
     </div>
   );
