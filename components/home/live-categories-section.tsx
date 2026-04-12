@@ -87,7 +87,8 @@ export function LiveCategoriesSection({ initialCategories, initialMealCounts }: 
       count: mealCounts[category.name.toLowerCase()] ?? 0,
     }))
     .filter((item) => item.count >= 1)
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 7);
 
   return (
     <section className="fade-up space-y-4">
@@ -95,7 +96,7 @@ export function LiveCategoriesSection({ initialCategories, initialMealCounts }: 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl md:text-3xl">Browse Categories</h2>
           <Button asChild variant="outline" className="hidden sm:inline-flex">
-            <Link href="/meals">View all meals</Link>
+            <Link href="/categories">View all Categories</Link>
           </Button>
         </div>
       </div>
@@ -105,6 +106,7 @@ export function LiveCategoriesSection({ initialCategories, initialMealCounts }: 
           const preset = categoryVisualPresets[index % categoryVisualPresets.length];
           const isTopCategory = index === 0;
           const responsiveCardSize = isTopCategory ? "sm:col-span-2 lg:col-span-2" : "";
+          const mobileVisibility = index === 6 ? "hidden sm:block" : "";
           return (
             <CategoryCard
               key={category.id}
@@ -114,7 +116,7 @@ export function LiveCategoriesSection({ initialCategories, initialMealCounts }: 
               imageSrc={category.imageUrl}
               imagePosition={preset.imagePosition}
               overlayToneClass={preset.overlayToneClass}
-              className={responsiveCardSize}
+              className={`${responsiveCardSize} ${mobileVisibility}`.trim()}
             />
           );
         })}
@@ -130,7 +132,7 @@ export function LiveCategoriesSection({ initialCategories, initialMealCounts }: 
       </div>
 
       <Button asChild variant="outline" className="w-full sm:hidden">
-        <Link href="/meals">View all meals</Link>
+        <Link href="/categories">View all Categories</Link>
       </Button>
     </section>
   );

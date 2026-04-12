@@ -1,7 +1,7 @@
 import { apiRequest } from "@/lib/api";
 import type {
   AiMealNaturalSearchResponse,
-  AiMealRecommendation,
+  AiMealRecommendationResponse,
   AiMealReviewSummary,
   AiSupportChatResponse,
 } from "@/types";
@@ -53,7 +53,7 @@ function toReviewSummaryQueryString(query: MealReviewSummaryQuery) {
 
 export const aiService = {
   mealRecommendations(query: MealRecommendationQuery = {}) {
-    return apiRequest<AiMealRecommendation[]>(
+    return apiRequest<AiMealRecommendationResponse>(
       `/api/v1/ai/recommendations/meals${toQueryString(query)}`,
     );
   },

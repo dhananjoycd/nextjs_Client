@@ -3,7 +3,7 @@ import { ArrowRight, Search, ShieldCheck, Sparkles, Star, Store, Truck } from "l
 import { MealNaturalSearch, MealRecommendations } from "@/components/ai";
 import { MealCard, ProviderCard } from "@/components/home";
 import { LiveCategoriesSection } from "@/components/home/live-categories-section";
-import { Badge, Button, Input } from "@/components/ui";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Badge, Button, Input } from "@/components/ui";
 import { config } from "@/lib/config";
 import type { Category, Meal, Provider } from "@/types";
 
@@ -81,13 +81,6 @@ const trustItems = [
   { label: "Loved by users", value: "4.8/5", icon: Star },
   { label: "Quick delivery", value: "25 min avg", icon: Truck },
   { label: "Safe checkout", value: "100% secure", icon: ShieldCheck },
-] as const;
-
-const highlightStats = [
-  { label: "Meals listed", value: "250+" },
-  { label: "Verified providers", value: "60+" },
-  { label: "Orders delivered", value: "12k+" },
-  { label: "Average rating", value: "4.8/5" },
 ] as const;
 
 const testimonials = [
@@ -275,9 +268,8 @@ export default async function HomePage() {
       <LiveCategoriesSection initialCategories={categories} initialMealCounts={initialCategoryMealCounts} />
 
       <MealNaturalSearch
-        title="Search meals in plain language"
-        description="Type naturally like you speak. The AI parser extracts your intent, budget hints, and taste signals to rank matching meals."
-        placeholder="Try: healthy spicy chicken under 350"
+        title=""
+        description="Type your meal preferences in natural language and let our AI find the best matches for you."
         limit={6}
       />
 
@@ -378,25 +370,11 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="fade-up space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl md:text-3xl">Platform Highlights</h2>
-          <Badge className="bg-sky-100 text-sky-700">Operational Snapshot</Badge>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {highlightStats.map((item) => (
-            <article key={item.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-sm text-slate-500">{item.label}</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">{item.value}</p>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <section className="fade-up grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <article className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Why teams use FoodHub</p>
-          <h2 className="mt-3 text-2xl md:text-3xl">Designed to support discovery, checkout, and fulfillment in one flow.</h2>
+          <h2 className="mt-3 text-2xl md:text-3xl">From discovery to delivery, we streamline every step.</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {[
               "Conversion-focused hero and listing pages",
@@ -458,14 +436,23 @@ export default async function HomePage() {
         </article>
         <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">FAQ</p>
-          <div className="mt-3 space-y-3">
+          <Accordion
+            type="single"
+            collapsible
+            defaultValue={faqs[0]?.title}
+            className="mt-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white"
+          >
             {faqs.map((item) => (
-              <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                <h3 className="text-lg">{item.title}</h3>
-                <p className="mt-1 text-sm text-slate-600">{item.text}</p>
-              </div>
+              <AccordionItem key={item.title} value={item.title} className="border-slate-200/80">
+                <AccordionTrigger className="bg-slate-50/60 px-4 py-4">
+                  <span className="pr-4 text-left text-base font-semibold text-slate-900">{item.title}</span>
+                </AccordionTrigger>
+                <AccordionContent className="bg-white px-4 pb-4 pt-0 text-sm leading-relaxed text-slate-600">
+                  {item.text}
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         </article>
       </section>
 

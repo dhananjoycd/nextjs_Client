@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { BrainCircuit, Search, ShoppingCart, Sparkles } from "lucide-react";
+import { Search, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Badge, Button, Card, Input, Skeleton } from "@/components/ui";
 import { addMealToCart } from "@/lib/cart";
 import { formatMoney } from "@/lib/money";
 import { aiService } from "@/services";
-import type { AiMealNaturalSearchResponse, AiMealSearchResult, Meal } from "@/types";
+import type { AiAssistantMeta, AiMealNaturalSearchResponse, AiMealSearchResult, Meal } from "@/types";
 
 type Props = {
   title: string;
@@ -45,6 +45,7 @@ export function MealNaturalSearch({
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<AiMealNaturalSearchResponse | AiMealSearchResult[] | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [assistant, setAssistant] = useState<AiAssistantMeta | null>(null);
 
   const interpreted =
     response && !Array.isArray(response) ? response.interpreted : undefined;
@@ -79,9 +80,11 @@ export function MealNaturalSearch({
     try {
       const result = await aiService.naturalLanguageMealSearch({ q: clean, limit });
       setResponse(result);
+      setAssistant("assistant" in result ? result.assistant : null);
       setHasSearched(true);
     } catch {
       setResponse(null);
+      setAssistant(null);
       setHasSearched(true);
       toast.error("AI search failed. Please try again.");
     } finally {
@@ -109,16 +112,23 @@ export function MealNaturalSearch({
 
   return (
     <section className="space-y-4 rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/60 p-4 sm:p-5">
+      {assistant ? (
+        <p className="text-xs text-slate-500">
+          {assistant.source === "gemini"
+            ? `Rayna AI is using Gemini (${assistant.model}) to interpret your meal request.`
+            : "Rayna AI is using local parsing and ranking for this search right now."}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-            <BrainCircuit className="size-3.5" /> AI Natural Language Search
+        Search meals in plain language
           </p>
           <h2 className="text-2xl">{title}</h2>
           <p className="max-w-2xl text-sm text-slate-600">{description}</p>
         </div>
-        <Badge className="bg-emerald-100 text-emerald-700">
-          <Sparkles className="mr-1 size-3.5" /> Intent aware
+        <Badge className={assistant?.source === "gemini" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}>
+          {assistant?.source === "gemini" ? `${assistant.label} (Gemini)` : `${assistant?.label ?? "Rayna LV1.1"} (Local)`}
         </Badge>
       </div>
 

@@ -8,7 +8,7 @@ import { Badge, Button, Card, Skeleton } from "@/components/ui";
 import { addMealToCart } from "@/lib/cart";
 import { formatMoney } from "@/lib/money";
 import { aiService } from "@/services";
-import type { AiMealRecommendation, Meal } from "@/types";
+import type { AiAssistantMeta, AiMealRecommendation, Meal } from "@/types";
 
 type Props = {
   title: string;
@@ -35,6 +35,7 @@ export function MealRecommendations({
   emptyText = "No recommendations available right now.",
 }: Props) {
   const [items, setItems] = useState<AiMealRecommendation[]>([]);
+  const [assistant, setAssistant] = useState<AiAssistantMeta | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,10 +46,12 @@ export function MealRecommendations({
         setLoading(true);
         const result = await aiService.mealRecommendations({ mealId, limit, excludeIds });
         if (!active) return;
-        setItems(Array.isArray(result) ? result : []);
+        setItems(Array.isArray(result?.items) ? result.items : []);
+        setAssistant(result?.assistant ?? null);
       } catch {
         if (!active) return;
         setItems([]);
+        setAssistant(null);
       } finally {
         if (active) {
           setLoading(false);
@@ -81,16 +84,23 @@ export function MealRecommendations({
 
   return (
     <section className="space-y-4">
+      {assistant ? (
+        <p className="text-xs text-slate-500">
+          {assistant.source === "gemini"
+            ? `Rayna AI is using Gemini (${assistant.model}) for recommendation reranking.`
+            : "Rayna AI is using local fallback logic for recommendations right now."}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-            <BrainCircuit className="size-3.5" /> AI Recommendations
+         AI Recommendations
           </p>
           <h2 className="text-2xl">{title}</h2>
           <p className="max-w-2xl text-sm text-slate-600">{description}</p>
         </div>
-        <Badge className="bg-emerald-100 text-emerald-700">
-          <Sparkles className="mr-1 size-3.5" /> Smart ranking
+        <Badge className={assistant?.source === "gemini" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}>
+          <Sparkles className="mr-1 size-3.5" /> {assistant?.source === "gemini" ? `${assistant.label} (Gemini)` : `${assistant?.label ?? "Rayna LV1.1"} (Local)`}
         </Badge>
       </div>
 

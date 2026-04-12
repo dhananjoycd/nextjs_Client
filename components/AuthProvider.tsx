@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AUTH_EXPIRED_EVENT } from "@/lib/api";
+import { config } from "@/lib/config";
 import { authService } from "@/services";
 import type { User } from "@/lib/types";
 
@@ -113,8 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithGoogle = useCallback(async () => {
     if (typeof window === "undefined") return;
-    const callbackURL = `${window.location.origin}/auth/callback`;
-    const payload = await authService.googleLogin(callbackURL);
+    const payload = await authService.googleLogin(config.authCallbackUrl);
     if (!payload.url) {
       throw new Error("Google login is not configured");
     }

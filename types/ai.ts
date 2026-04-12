@@ -4,6 +4,12 @@ export type AiRecommendationSignal =
   | "popular_pick"
   | "budget_match";
 
+export type AiAssistantMeta = {
+  source: "gemini" | "local";
+  label: "Rayna GV2.5" | "Rayna LV1.1";
+  model: string;
+};
+
 export type AiSearchSignal =
   | "text_match"
   | "budget_match"
@@ -72,9 +78,15 @@ export type AiMealSearchInterpretation = {
 };
 
 export type AiMealNaturalSearchResponse = {
+  assistant: AiAssistantMeta;
   query: string;
   interpreted: AiMealSearchInterpretation;
   data: AiMealSearchResult[];
+};
+
+export type AiMealRecommendationResponse = {
+  assistant: AiAssistantMeta;
+  items: AiMealRecommendation[];
 };
 
 export type AiMealReviewTheme = {
@@ -84,6 +96,7 @@ export type AiMealReviewTheme = {
 };
 
 export type AiMealReviewSummary = {
+  assistant: AiAssistantMeta;
   mealId: string;
   mealTitle: string;
   reviewCount: number;
@@ -117,5 +130,5 @@ export type AiSupportChatResponse = {
   intent: string;
   suggestions: string[];
   escalate: boolean;
-  source: "llm" | "rules";
+  assistant: AiAssistantMeta;
 };

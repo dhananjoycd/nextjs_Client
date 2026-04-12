@@ -103,6 +103,13 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
 STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx
 ```
 
+## Google OAuth Setup
+
+- In Google Cloud Console, add `http://localhost:3000` to `Authorized JavaScript origins`.
+- Add `http://localhost:5000/api/v1/auth/callback/google` to `Authorized redirect URIs`.
+- The frontend route `http://localhost:3000/auth/callback` is the final in-app page after backend login succeeds.
+- For production, also add your live frontend origin and your live backend callback URL, such as `https://your-frontend-domain.com` and `https://your-api-domain.com/api/v1/auth/callback/google`.
+
 ## Security
 
 - Uses role-based access control to restrict privileged routes and operations.

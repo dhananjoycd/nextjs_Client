@@ -55,18 +55,6 @@ export default function ContactPage() {
         })}
       </section>
 
-      <Card className="space-y-4">
-        <h2 className="text-2xl">Quick help</h2>
-        <p className="text-sm text-slate-600">Common answers for customers, providers, and reviewers.</p>
-        <div className="grid gap-4">
-          {faqs.map((faq) => (
-            <div key={faq.question} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-              <h3 className="text-lg">{faq.question}</h3>
-              <p className="mt-1 text-sm text-slate-600">{faq.answer}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
 
       <SupportChat />
 

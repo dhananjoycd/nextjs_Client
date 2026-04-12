@@ -81,10 +81,12 @@ export function MealReviewSummary({ mealId, mealTitle }: Props) {
           <h3 className="text-2xl">What customers are saying</h3>
           <p className="max-w-2xl text-sm text-slate-600">{summary.summary}</p>
         </div>
-        <Badge className="bg-emerald-100 text-emerald-700">
-          <Sparkles className="mr-1 size-3.5" /> {summary.recommendation}
+        <Badge className={summary.assistant.source === "gemini" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}>
+          <Sparkles className="mr-1 size-3.5" /> {summary.assistant.label}
         </Badge>
       </div>
+
+      <p className="text-xs text-slate-500">{summary.recommendation}</p>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
