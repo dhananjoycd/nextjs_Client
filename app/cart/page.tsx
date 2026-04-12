@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { MealNaturalSearch, MealRecommendations } from "@/components/ai";
 import { useAuth } from "@/components/AuthProvider";
 import {
   Alert,
@@ -295,6 +296,28 @@ export default function CartPage() {
               </div>
             )}
           </Card>
+
+          <MealRecommendations
+            title="AI picks for your next add-on"
+            description="These meals are ranked around your cart, ordering patterns, provider affinity, and price fit."
+            limit={4}
+            excludeIds={items.map((item) => item.mealId)}
+            emptyText="Add a few more meals or place more orders to unlock stronger recommendations."
+          />
+
+          <MealNaturalSearch
+            title="Need something specific for this cart?"
+            description="Describe what you want next, and AI will search by intent, text relevance, and your ordering behavior."
+            initialQuery="quick affordable side meal"
+            placeholder="Try: add a light healthy side under 200"
+            limit={4}
+            suggestions={[
+              "budget side dish under 200",
+              "high protein add-on",
+              "sweet dessert under 250",
+              "premium dinner combo",
+            ]}
+          />
         </div>
 
         <div className="hidden lg:block">

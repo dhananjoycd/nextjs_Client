@@ -26,6 +26,7 @@ import {
 } from "@/lib/cart";
 import { formatMoney, roundMoney } from "@/lib/money";
 import { useAuth } from "@/components/AuthProvider";
+import { routes } from "@/lib/routes";
 import { cartService, ordersService, paymentsService } from "@/services";
 
 type OrderAddress = {
@@ -77,7 +78,7 @@ function toScheduledAt(date: string, time: string) {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   const [cartState] = useState<CartState>(() => readCartState());
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(() => readSavedAddresses());
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
@@ -144,7 +145,7 @@ export default function CheckoutPage() {
     toast.success("Address saved");
   }
 
-  async function syncLocalCartToServer(authToken: string) {
+  async function syncLocalCartToServer(authToken?: string | null) {
     const existing = await cartService.get(authToken);
 
     for (const item of existing.items ?? []) {
@@ -165,9 +166,13 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!token) {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
       toast.error("Please login again");
-      router.push("/login");
+      router.push(routes.login);
       return;
     }
 
@@ -225,7 +230,7 @@ export default function CheckoutPage() {
 
       clearCart();
       toast.success("Order placed successfully");
-      router.push(`/orders/${order.id}`);
+      router.push(routes.customerOrderDetails(order.id));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to place order");
     } finally {
@@ -238,7 +243,7 @@ export default function CheckoutPage() {
       <Card className="mx-auto mt-8 max-w-xl space-y-4 text-center">
         <h1 className="text-2xl font-semibold">Your cart is empty</h1>
         <p className="text-sm text-slate-600">Add meals before proceeding to checkout.</p>
-        <Button onClick={() => router.push("/meals")}>Go to Meals</Button>
+        <Button onClick={() => router.push(routes.meals)}>Go to Meals</Button>
       </Card>
     );
   }
@@ -318,7 +323,7 @@ export default function CheckoutPage() {
               <div className="min-w-0">
                 <p className="line-clamp-1 text-sm font-medium">{item.name}</p>
                 <Button asChild variant="ghost" size="sm" className="h-auto px-0 text-xs text-emerald-700 hover:bg-transparent hover:text-emerald-800">
-                  <Link href={`/meals/${item.mealId}`}>View details</Link>
+                  <Link href={routes.mealDetails(item.mealId)}>View details</Link>
                 </Button>
               </div>
               <p className="shrink-0 text-sm text-slate-600">

@@ -22,17 +22,17 @@ type ConfirmStripeSessionResponse = {
 };
 
 export const paymentsService = {
-  createStripeCheckoutSession(token: string, payload: StripeCheckoutPayload) {
+  createStripeCheckoutSession(token: string | null | undefined, payload: StripeCheckoutPayload) {
     return apiRequest<StripeCheckoutResponse>("/api/v1/payments/stripe/checkout-session", {
       method: "POST",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify(payload),
     });
   },
-  confirmStripeSession(token: string, sessionId: string) {
+  confirmStripeSession(token: string | null | undefined, sessionId: string) {
     return apiRequest<ConfirmStripeSessionResponse>("/api/v1/payments/stripe/confirm-session", {
       method: "POST",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify({ sessionId }),
     });
   },

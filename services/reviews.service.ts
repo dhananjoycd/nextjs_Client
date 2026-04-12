@@ -9,12 +9,11 @@ type CreateReviewPayload = {
 };
 
 export const reviewsService = {
-  create(token: string, payload: CreateReviewPayload) {
+  create(token: string | null | undefined, payload: CreateReviewPayload) {
     return apiRequest<Review>("/api/v1/reviews", {
       method: "POST",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify(payload),
     });
   },
 };
-

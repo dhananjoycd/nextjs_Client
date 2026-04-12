@@ -3,7 +3,7 @@ import type { Order } from "@/types";
 
 export const ordersService = {
   create(
-    token: string,
+    token: string | null | undefined,
     payload: {
       deliveryAddress: string;
       note?: string;
@@ -14,23 +14,23 @@ export const ordersService = {
   ) {
     return apiRequest<Order>("/api/v1/orders", {
       method: "POST",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify(payload),
     });
   },
-  my(token: string) {
-    return apiRequest<Order[]>("/api/v1/orders/my", { token });
+  my(token?: string | null) {
+    return apiRequest<Order[]>("/api/v1/orders/my", token ? { token } : {});
   },
-  list(token: string) {
-    return apiRequest<Order[]>("/api/v1/orders", { token });
+  list(token?: string | null) {
+    return apiRequest<Order[]>("/api/v1/orders", token ? { token } : {});
   },
-  details(token: string, id: string) {
-    return apiRequest<Order>(`/api/v1/orders/${id}`, { token });
+  details(token: string | null | undefined, id: string) {
+    return apiRequest<Order>(`/api/v1/orders/${id}`, token ? { token } : {});
   },
-  updateStatus(token: string, id: string, status: string) {
+  updateStatus(token: string | null | undefined, id: string, status: string) {
     return apiRequest<Order>(`/api/v1/orders/${id}/status`, {
       method: "PATCH",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify({ status }),
     });
   },

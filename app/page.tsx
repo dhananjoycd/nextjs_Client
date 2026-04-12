@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Search, ShieldCheck, Sparkles, Star, Store, Truck } from "lucide-react";
+import { MealNaturalSearch, MealRecommendations } from "@/components/ai";
 import { MealCard, ProviderCard } from "@/components/home";
 import { LiveCategoriesSection } from "@/components/home/live-categories-section";
 import { Badge, Button, Input } from "@/components/ui";
@@ -273,6 +274,13 @@ export default async function HomePage() {
 
       <LiveCategoriesSection initialCategories={categories} initialMealCounts={initialCategoryMealCounts} />
 
+      <MealNaturalSearch
+        title="Search meals in plain language"
+        description="Type naturally like you speak. The AI parser extracts your intent, budget hints, and taste signals to rank matching meals."
+        placeholder="Try: healthy spicy chicken under 350"
+        limit={6}
+      />
+
       <section className="fade-up space-y-4">
         <div className="rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -334,6 +342,13 @@ export default async function HomePage() {
           <Link href="/providers">Explore providers</Link>
         </Button>
       </section>
+
+      <MealRecommendations
+        title="Smart picks to start with"
+        description="Our recommendation engine ranks meals using popularity, rating quality, price fit, and similar food patterns."
+        limit={4}
+        emptyText="AI recommendations are warming up. Browse meals to create stronger signals."
+      />
 
       <section className="fade-up space-y-4">
         <h2 className="text-2xl md:text-3xl">How It Works</h2>

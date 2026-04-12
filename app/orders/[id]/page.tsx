@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Protected } from "@/components/Protected";
 import { useAuth } from "@/components/AuthProvider";
 import { Badge, Button, Card, Textarea } from "@/components/ui";
+import { routes } from "@/lib/routes";
 import { ordersService, reviewsService } from "@/services";
 import type { Order } from "@/types";
 
@@ -30,7 +31,7 @@ function formatDateTime(value?: string) {
 
 export default function OrderDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { token } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,7 +43,7 @@ export default function OrderDetailsPage() {
   const lastStatusRef = useRef<string>("");
 
   const fetchDetails = useCallback(async (silent = false) => {
-    if (!token || !params.id) return;
+    if (authLoading || !user || !params.id) return;
     try {
       if (!silent) setLoading(true);
       const data = await ordersService.details(token, params.id);
@@ -57,19 +58,19 @@ export default function OrderDetailsPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [params.id, token]);
+  }, [authLoading, params.id, token, user]);
 
   useEffect(() => {
     void fetchDetails();
   }, [fetchDetails]);
 
   useEffect(() => {
-    if (!token || !params.id) return;
+    if (authLoading || !user || !params.id) return;
     const timer = window.setInterval(() => {
       void fetchDetails(true);
     }, LIVE_REFRESH_MS);
     return () => window.clearInterval(timer);
-  }, [fetchDetails, params.id, token]);
+  }, [authLoading, fetchDetails, params.id, user]);
 
   async function refreshDetails() {
     try {
@@ -88,7 +89,7 @@ export default function OrderDetailsPage() {
   const canReview = order?.status === "DELIVERED";
 
   async function submitReview(mealId: string) {
-    if (!token || !order) return;
+    if (!user || !order) return;
     const rating = reviewRatings[mealId] ?? 0;
     if (rating < 1 || rating > 5) {
       toast.error("Rating must be between 1 and 5");
@@ -129,7 +130,7 @@ export default function OrderDetailsPage() {
               Refresh
             </Button>
             <Button variant="secondary" asChild>
-              <Link href="/orders">Back to orders</Link>
+              <Link href={routes.customerOrders}>Back to orders</Link>
             </Button>
           </div>
         </Card>
@@ -177,7 +178,7 @@ export default function OrderDetailsPage() {
                       <p>{item.meal?.title ?? item.meal?.name ?? "Meal"}</p>
                       {item.mealId ? (
                         <Button asChild variant="ghost" size="sm" className="h-auto px-0 text-xs text-emerald-700 hover:bg-transparent hover:text-emerald-800">
-                          <Link href={`/meals/${item.mealId}`}>View details</Link>
+                          <Link href={routes.mealDetails(item.mealId)}>View details</Link>
                         </Button>
                       ) : null}
                     </div>

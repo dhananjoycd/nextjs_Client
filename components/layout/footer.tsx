@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getRoleHomePath } from "@/lib/auth";
+import { routes } from "@/lib/routes";
 
 export function Footer() {
   const { user, loading } = useAuth();
@@ -22,13 +23,13 @@ export function Footer() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
             <Link
-              href="/meals"
+              href={routes.meals}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-400"
             >
               Explore Meals <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/contact"
+              href={routes.contact}
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-700 px-4 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
             >
               Contact Support
@@ -49,34 +50,34 @@ export function Footer() {
         <div className="space-y-3">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Quick Links</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <Link href="/" className="block hover:text-white">
+            <Link href={routes.home} className="block hover:text-white">
               Home
             </Link>
-            <Link href="/meals" className="block hover:text-white">
+            <Link href={routes.meals} className="block hover:text-white">
               Meals
             </Link>
-            <Link href="/providers" className="block hover:text-white">
+            <Link href={routes.providers} className="block hover:text-white">
               Providers
             </Link>
-            <Link href="/cart" className="block hover:text-white">
+            <Link href={routes.cart} className="block hover:text-white">
               Cart
             </Link>
-            <Link href="/orders" className="block hover:text-white">
+            <Link href={routes.customerOrders} className="block hover:text-white">
               Orders
             </Link>
             {!loading && !user && (
               <>
-                <Link href="/login" className="block hover:text-white">
+                <Link href={routes.login} className="block hover:text-white">
                   Login
                 </Link>
-                <Link href="/register" className="block hover:text-white">
+                <Link href={routes.register} className="block hover:text-white">
                   Register
                 </Link>
               </>
             )}
             {!loading && user && (
               <>
-                <Link href="/profile" className="block hover:text-white">
+                <Link href={routes.customerProfile} className="block hover:text-white">
                   Profile
                 </Link>
                 <Link href={roleHome} className="block hover:text-white">
@@ -90,16 +91,16 @@ export function Footer() {
         <div className="space-y-3">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Company</p>
           <div className="space-y-2 text-sm">
-            <Link href="/about" className="block hover:text-white">
+            <Link href={routes.about} className="block hover:text-white">
               About Us
             </Link>
-            <Link href="/contact" className="block hover:text-white">
+            <Link href={routes.contact} className="block hover:text-white">
               Contact & Support
             </Link>
-            <Link href="/privacy" className="block hover:text-white">
+            <Link href={routes.privacy} className="block hover:text-white">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="block hover:text-white">
+            <Link href={routes.terms} className="block hover:text-white">
               Terms of Service
             </Link>
           </div>

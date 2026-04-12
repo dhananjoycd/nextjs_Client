@@ -19,31 +19,32 @@ import {
   SheetTrigger,
 } from "@/components/ui";
 import { getRoleHomePath } from "@/lib/auth";
+import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 const primaryLinks = [
-  { href: "/", label: "Home" },
-  { href: "/meals", label: "Meals" },
-  { href: "/providers", label: "Providers" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
+  { href: routes.home, label: "Home" },
+  { href: routes.meals, label: "Meals" },
+  { href: routes.providers, label: "Providers" },
+  { href: routes.about, label: "About" },
+  { href: routes.contact, label: "Contact" },
 ];
 
 const pagesLinks = [
-  { href: "/privacy", label: "Privacy Policy" },
-  { href: "/terms", label: "Terms of Service" },
+  { href: routes.privacy, label: "Privacy Policy" },
+  { href: routes.terms, label: "Terms of Service" },
 ];
 
 const customerLinks = [
-  { href: "/cart", label: "Cart" },
-  { href: "/orders", label: "Orders" },
-  { href: "/profile", label: "Profile" },
+  { href: routes.cart, label: "Cart" },
+  { href: routes.customerOrders, label: "Orders" },
+  { href: routes.customerProfile, label: "Profile" },
 ];
 
 function getAccountMenuLink(role?: string) {
-  if (role === "CUSTOMER") return { href: "/profile", label: "My Profile" };
-  if (role === "PROVIDER") return { href: "/provider/dashboard", label: "Provider Dashboard" };
-  if (role === "ADMIN") return { href: "/admin", label: "Admin Dashboard" };
+  if (role === "CUSTOMER") return { href: routes.customerProfile, label: "My Profile" };
+  if (role === "PROVIDER") return { href: routes.providerDashboard, label: "Provider Dashboard" };
+  if (role === "ADMIN") return { href: routes.adminDashboard, label: "Admin Dashboard" };
   return null;
 }
 
@@ -88,12 +89,12 @@ export function Navbar() {
 
   const roleLinks = useMemo(() => {
     if (user?.role === "CUSTOMER") return customerLinks;
-    if (user?.role === "PROVIDER") return [{ href: "/provider/dashboard", label: "Provider Dashboard" }];
-    if (user?.role === "ADMIN") return [{ href: "/admin", label: "Admin Dashboard" }];
+    if (user?.role === "PROVIDER") return [{ href: routes.providerDashboard, label: "Provider Dashboard" }];
+    if (user?.role === "ADMIN") return [{ href: routes.adminDashboard, label: "Admin Dashboard" }];
     return [];
   }, [user?.role]);
 
-  const quickActionHref = user ? getRoleHomePath(user.role) : "/register";
+  const quickActionHref = user ? getRoleHomePath(user.role) : routes.register;
   const quickActionLabel = user ? (user.role === "ADMIN" ? "Admin dashboard" : user.role === "PROVIDER" ? "Provider dashboard" : "Open dashboard") : "Start ordering";
 
   return (
@@ -101,24 +102,25 @@ export function Navbar() {
       className={cn(
         "sticky top-0 z-40 transition-all duration-300",
         scrolled
-          ? "border-b border-white/60 bg-white/55 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
-          : "bg-white/35 backdrop-blur-xl",
+          ? "border-b border-white/60 bg-white/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
+          : "bg-white/40 backdrop-blur-xl",
       )}
     >
-      <nav className="mx-auto flex h-[76px] max-w-[1280px] items-center justify-between px-4 sm:px-5 lg:px-6">
-        <Link href="/" className="inline-flex items-center gap-3 text-lg font-bold">
-          <span className="inline-flex size-9 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+      <nav className="mx-auto flex min-h-[74px] max-w-[1280px] items-center gap-3 px-4 py-3 sm:px-5 lg:px-6">
+        <Link href={routes.home} className="inline-flex shrink-0 items-center gap-3 text-lg font-bold">
+          <span className="inline-flex size-9 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm ring-1 ring-slate-900/10">
             <ShoppingBag className="size-4" />
           </span>
           <span className="leading-none">
             FoodHub
-            <span className="block text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">
+            <span className="hidden text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:block">
               Curated meals
             </span>
           </span>
         </Link>
 
-        <div className="hidden items-center gap-7 rounded-full border border-white/60 bg-white/55 px-5 py-3 shadow-[0_8px_30px_rgba(15,23,42,0.05)] lg:flex">
+        <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
+          <div className="flex w-full max-w-3xl items-center justify-center gap-5 overflow-x-auto rounded-full border border-white/60 bg-white/60 px-4 py-3 shadow-[0_8px_30px_rgba(15,23,42,0.05)] backdrop-blur-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {primaryLinks.map((link) => (
             <div className="group" key={link.href}>
               <NavLink href={link.href} label={link.label} active={isLinkActive(pathname, link.href)} />
@@ -143,16 +145,17 @@ export function Navbar() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
           {!user ? (
             <>
               <Button asChild variant="ghost" size="sm" className="rounded-full px-4 text-slate-700 hover:bg-white/70">
-                <Link href="/login">Login</Link>
+                <Link href={routes.login}>Login</Link>
               </Button>
-              <Button asChild size="sm" className="rounded-full px-5 shadow-sm">
-                <Link href="/register">Get Started</Link>
+              <Button asChild size="sm" className="rounded-full px-4 shadow-sm lg:px-5">
+                <Link href={routes.register}>Get Started</Link>
               </Button>
             </>
           ) : (
@@ -161,11 +164,14 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full border border-white/65 bg-white/60 px-2.5 shadow-sm hover:bg-white"
+                  className="rounded-full border border-white/65 bg-white/70 px-2.5 shadow-sm hover:bg-white"
                   aria-label="Open account menu"
                 >
                   <span className="inline-flex size-7 items-center justify-center rounded-full bg-slate-900 text-white">
                     <UserCircle2 className="size-4" />
+                  </span>
+                  <span className="hidden max-w-[140px] truncate text-sm font-medium text-slate-700 lg:block">
+                    {user.name}
                   </span>
                   <ChevronDown className="size-4 text-slate-500" />
                 </Button>
@@ -191,13 +197,29 @@ export function Navbar() {
         </div>
 
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild className="lg:hidden">
-            <Button size="icon" variant="secondary" aria-label="Open menu">
+          <SheetTrigger asChild className="md:hidden">
+            <Button
+              size="icon"
+              variant="secondary"
+              aria-label="Open menu"
+              className="shrink-0 rounded-full border border-white/65 bg-white/75 shadow-sm"
+            >
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[88vw] max-w-sm space-y-6">
+          <SheetContent side="right" className="w-[92vw] max-w-sm space-y-6 border-l-white/70 bg-white/95 px-5 backdrop-blur-xl">
             <SheetTitle>Menu</SheetTitle>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {user ? "Signed in" : "Guest browsing"}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">
+                {user?.name ?? "Discover your next meal"}
+              </p>
+              <p className="text-sm text-slate-600">
+                {user ? `${user.role} access active` : "Browse meals, providers, and support pages from one place."}
+              </p>
+            </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Explore</p>
@@ -265,6 +287,13 @@ export function Navbar() {
               )}
             </div>
             <div className="space-y-2 border-t border-slate-200 pt-4">
+              {user && accountMenuLink && (
+                <Button asChild variant="outline" className="w-full">
+                  <Link href={accountMenuLink.href} onClick={() => setMobileMenuOpen(false)}>
+                    {accountMenuLink.label}
+                  </Link>
+                </Button>
+              )}
               {!user && (
                 <Button asChild variant="outline" className="w-full">
                   <Link href={quickActionHref} onClick={() => setMobileMenuOpen(false)}>
@@ -275,12 +304,12 @@ export function Navbar() {
               {!user ? (
                 <>
                   <Button asChild variant="secondary" className="w-full">
-                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href={routes.login} onClick={() => setMobileMenuOpen(false)}>
                       Login
                     </Link>
                   </Button>
                   <Button asChild className="w-full">
-                    <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href={routes.register} onClick={() => setMobileMenuOpen(false)}>
                       Register
                     </Link>
                   </Button>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { SupportChat } from "@/components/ai";
 import { Button, Card } from "@/components/ui";
 
 const contactCards = [
@@ -66,6 +67,8 @@ export default function ContactPage() {
           ))}
         </div>
       </Card>
+
+      <SupportChat />
 
       <Card className="space-y-4">
         <h2 className="text-2xl">Still need support?</h2>

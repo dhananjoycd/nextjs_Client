@@ -8,10 +8,11 @@ import { Protected } from "@/components/Protected";
 import { useAuth } from "@/components/AuthProvider";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { Button, Card, Input } from "@/components/ui";
+import { routes } from "@/lib/routes";
 import { userService } from "@/services";
 
 export default function ProfilePage() {
-  const { token, refreshMe } = useAuth();
+  const { token, user, loading: authLoading, refreshMe } = useAuth();
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [initial, setInitial] = useState({
@@ -22,7 +23,8 @@ export default function ProfilePage() {
   });
 
   const loadProfile = useCallback(async () => {
-    if (!token) {
+    if (authLoading) return;
+    if (!user) {
       setLoading(false);
       return;
     }
@@ -40,7 +42,7 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [authLoading, token, user]);
 
   useEffect(() => {
     void loadProfile();
@@ -51,7 +53,7 @@ export default function ProfilePage() {
   const form = useForm({
     defaultValues: initial,
     onSubmit: async ({ value }) => {
-      if (!token) throw new Error("Please login again");
+      if (!user) throw new Error("Please login again");
       const payload = {
         name: value.name.trim(),
         phone: value.phone.trim(),
@@ -72,9 +74,9 @@ export default function ProfilePage() {
         description="Manage your account details and delivery profile."
         hideNav
         links={[
-          { href: "/cart", label: "Cart" },
-          { href: "/orders", label: "Orders" },
-          { href: "/profile", label: "Profile", active: true },
+          { href: routes.cart, label: "Cart" },
+          { href: routes.customerOrders, label: "Orders" },
+          { href: routes.customerProfile, label: "Profile", active: true },
         ]}
       >
         {loading ? (

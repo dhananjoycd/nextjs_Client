@@ -1,23 +1,10 @@
 import type { Metadata } from "next";
-import { Merriweather, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Container } from "@/components/layout/container";
 import { AppToaster } from "@/components/ui";
-
-const titleFont = Merriweather({
-  variable: "--font-title",
-  subsets: ["latin"],
-  weight: ["700"],
-  preload: false,
-});
-
-const bodyFont = Space_Grotesk({
-  variable: "--font-body",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://foodhub.app"),
@@ -57,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${titleFont.variable} ${bodyFont.variable} antialiased`}>
+      <body suppressHydrationWarning className="antialiased">
         <AuthProvider>
           <div className="app-shell">
             <Header />

@@ -22,27 +22,27 @@ export type ServerCart = {
 };
 
 export const cartService = {
-  get(token: string) {
-    return apiRequest<ServerCart>("/api/v1/cart", { token });
+  get(token?: string | null) {
+    return apiRequest<ServerCart>("/api/v1/cart", token ? { token } : {});
   },
-  add(token: string, payload: { mealId: string; quantity?: number }) {
+  add(token: string | null | undefined, payload: { mealId: string; quantity?: number }) {
     return apiRequest<ServerCartItem>("/api/v1/cart", {
       method: "POST",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify(payload),
     });
   },
-  update(token: string, id: string, quantity: number) {
+  update(token: string | null | undefined, id: string, quantity: number) {
     return apiRequest<ServerCartItem>(`/api/v1/cart/${id}`, {
       method: "PATCH",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify({ quantity }),
     });
   },
-  remove(token: string, id: string) {
+  remove(token: string | null | undefined, id: string) {
     return apiRequest(`/api/v1/cart/${id}`, {
       method: "DELETE",
-      token,
+      ...(token ? { token } : {}),
     });
   },
 };

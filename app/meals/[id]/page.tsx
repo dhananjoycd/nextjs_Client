@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Building2, ShoppingCart, Star } from "lucide-react";
 import { toast } from "sonner";
+import { MealNaturalSearch, MealRecommendations, MealReviewSummary } from "@/components/ai";
 import { Badge, Button, Card } from "@/components/ui";
 import { apiRequest } from "@/lib/api";
 import { addMealToCart } from "@/lib/cart";
@@ -138,6 +139,7 @@ export default function MealDetailsPage() {
 
       <section className="space-y-3">
         <h2 className="text-2xl">Reviews</h2>
+        <MealReviewSummary mealId={meal.id} mealTitle={mealTitle} />
         {reviews.length === 0 ? (
           <Card>
             <p className="text-sm text-slate-600">No reviews yet.</p>
@@ -199,6 +201,28 @@ export default function MealDetailsPage() {
           )}
         </div>
       </section>
+
+      <MealRecommendations
+        title="AI picks related to this meal"
+        description="These suggestions are ranked from category similarity, provider overlap, dietary traits, and overall meal quality."
+        mealId={meal.id}
+        excludeIds={[meal.id]}
+        limit={4}
+        emptyText="We could not generate extra AI picks for this meal yet."
+      />
+
+      <MealNaturalSearch
+        title="Refine by taste in plain language"
+        description="Try a custom phrase to find alternatives by flavor, budget, and dietary style around this meal."
+        initialQuery={`${mealTitle} similar meals`}
+        placeholder="Try: similar but cheaper and high protein"
+        limit={4}
+        suggestions={[
+          `${mealCategory || "category"} meals under 300`,
+          `healthy alternatives to ${mealTitle}`,
+          `spicy meals like ${mealTitle}`,
+        ]}
+      />
     </div>
   );
 }

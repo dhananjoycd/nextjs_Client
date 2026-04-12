@@ -21,6 +21,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { adminService, categoriesService, ordersService } from "@/services";
+import { routes } from "@/lib/routes";
 import type { Category, Order, User } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -60,7 +61,7 @@ function formatDateTime(value?: string) {
 }
 
 export default function AdminPage() {
-  const { token } = useAuth();
+  const { token, user: authUser, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -88,7 +89,7 @@ export default function AdminPage() {
   const [categoryPage, setCategoryPage] = useState(1);
 
   const fetchData = useCallback(async (silent = false) => {
-    if (!token) return;
+    if (authLoading || !authUser) return;
     try {
       if (!silent) setLoading(true);
       const [userList, orderList, categoryList] = await Promise.all([
@@ -105,19 +106,19 @@ export default function AdminPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [token]);
+  }, [authLoading, authUser, token]);
 
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
 
   useEffect(() => {
-    if (!token) return;
+    if (authLoading || !authUser) return;
     const timer = window.setInterval(() => {
       void fetchData(true);
     }, LIVE_REFRESH_MS);
     return () => window.clearInterval(timer);
-  }, [fetchData, token]);
+  }, [authLoading, authUser, fetchData]);
 
   const stats = useMemo(
     () => {
@@ -236,7 +237,7 @@ export default function AdminPage() {
       imageUrl: "",
     },
     onSubmit: async ({ value }) => {
-      if (!token) throw new Error("Please login again");
+      if (!authUser) throw new Error("Please login again");
       const payload = {
         name: value.name.trim(),
         description: value.description.trim() || undefined,
@@ -272,7 +273,7 @@ export default function AdminPage() {
   }, [categoryForm, editingCategory, openCategory]);
 
   async function toggleUserStatus(user: User, active: boolean) {
-    if (!token) return;
+    if (!authUser) return;
     try {
       await adminService.updateUserStatus(token, user.id, active ? "ACTIVE" : "SUSPENDED");
       toast.success(`User ${active ? "activated" : "suspended"}`);
@@ -294,7 +295,7 @@ export default function AdminPage() {
   }
 
   async function confirmDeleteCategory() {
-    if (!token || !deletingCategory) return;
+    if (!authUser || !deletingCategory) return;
 
     try {
       await categoriesService.remove(token, deletingCategory.id);
@@ -312,11 +313,11 @@ export default function AdminPage() {
         title="Admin Dashboard"
         description="Monitor users, orders, and categories."
         links={[
-          { href: "/admin", label: "Overview" },
-          { href: "/admin#analytics", label: "Analytics" },
-          { href: "/admin#users", label: "Users" },
-          { href: "/admin#orders", label: "Orders" },
-          { href: "/admin#categories", label: "Categories" },
+          { href: routes.adminDashboard, label: "Overview" },
+          { href: `${routes.adminDashboard}#analytics`, label: "Analytics" },
+          { href: `${routes.adminDashboard}#users`, label: "Users" },
+          { href: `${routes.adminDashboard}#orders`, label: "Orders" },
+          { href: `${routes.adminDashboard}#categories`, label: "Categories" },
         ]}
       >
         {loading ? (

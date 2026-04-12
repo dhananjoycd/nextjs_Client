@@ -23,6 +23,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { categoriesService } from "@/services";
+import { routes } from "@/lib/routes";
 import type { Category, Meal, Order, Provider } from "@/types";
 
 type ProviderMeal = Meal & {
@@ -85,7 +86,7 @@ function resolveMealPrice(meal: ProviderMeal) {
 }
 
 export default function ProviderDashboardPage() {
-  const { token, user } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [meals, setMeals] = useState<ProviderMeal[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -103,7 +104,7 @@ export default function ProviderDashboardPage() {
   const mealFormSeedRef = useRef("");
 
   const fetchData = useCallback(async (silent = false) => {
-    if (!token || !user?.id) return;
+    if (authLoading || !user?.id) return;
     try {
       if (!silent) setLoading(true);
 
@@ -173,19 +174,19 @@ export default function ProviderDashboardPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [token, user?.id]);
+  }, [authLoading, token, user?.id]);
 
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
 
   useEffect(() => {
-    if (!token || !user?.id || openMealDialog) return;
+    if (authLoading || !user?.id || openMealDialog) return;
     const timer = window.setInterval(() => {
       void fetchData(true);
     }, LIVE_REFRESH_MS);
     return () => window.clearInterval(timer);
-  }, [fetchData, openMealDialog, token, user?.id]);
+  }, [authLoading, fetchData, openMealDialog, user?.id]);
 
   const stats = useMemo(() => {
     const pending = orders.filter((order) => order.status === "PENDING").length;
@@ -253,7 +254,7 @@ export default function ProviderDashboardPage() {
       isAvailable: "true",
     },
     onSubmit: async ({ value }) => {
-      if (!token) throw new Error("Please login again");
+      if (!user) throw new Error("Please login again");
       const payload = {
         categoryId: value.categoryId.trim(),
         title: value.title.trim(),
@@ -338,7 +339,7 @@ export default function ProviderDashboardPage() {
   }
 
   async function confirmDeleteMeal() {
-    if (!token || !deletingMeal) return;
+    if (!user || !deletingMeal) return;
     try {
       await apiRequest(`/api/v1/meals/${deletingMeal.id}`, { method: "DELETE", token });
       toast.success("Menu item deleted");
@@ -350,7 +351,7 @@ export default function ProviderDashboardPage() {
   }
 
   async function updateOrderStatus(orderId: string, nextStatus: string, successMessage: string) {
-    if (!token) return;
+    if (!user) return;
     const previousOrders = orders;
     try {
       setUpdatingOrderId(orderId);
@@ -371,7 +372,7 @@ export default function ProviderDashboardPage() {
   }
 
   async function rejectOrder(orderId: string) {
-    if (!token) return;
+    if (!user) return;
     try {
       setUpdatingOrderId(orderId);
       await apiRequest(`/api/v1/orders/${orderId}/status`, {
@@ -403,10 +404,10 @@ export default function ProviderDashboardPage() {
         title="Provider Dashboard"
         description="Manage menu items, incoming orders, and delivery pipeline."
         links={[
-          { href: "/provider/dashboard", label: "Overview" },
-          { href: "/provider/dashboard#provider-analytics", label: "Analytics" },
-          { href: "/provider/dashboard#incoming-orders", label: "Incoming Orders" },
-          { href: "/provider/dashboard#menu-management", label: "Menu Management" },
+          { href: routes.providerDashboard, label: "Overview" },
+          { href: `${routes.providerDashboard}#provider-analytics`, label: "Analytics" },
+          { href: `${routes.providerDashboard}#incoming-orders`, label: "Incoming Orders" },
+          { href: `${routes.providerDashboard}#menu-management`, label: "Menu Management" },
         ]}
       >
         {loading ? (

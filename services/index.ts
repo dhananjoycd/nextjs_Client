@@ -8,3 +8,4 @@ export * from "@/services/cart.service";
 export * from "@/services/user.service";
 export * from "@/services/payments.service";
 export * from "@/services/reviews.service";
+export * from "@/services/ai.service";

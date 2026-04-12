@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { AUTH_EXPIRED_EVENT } from "@/lib/api";
 import { authService } from "@/services";
 import type { User } from "@/lib/types";
 
@@ -23,7 +25,6 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const TOKEN_KEY = "foodhub_token";
 const USER_KEY = "foodhub_user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -31,16 +32,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem("foodhub_token");
+    localStorage.removeItem(USER_KEY);
+  }, []);
+
   useEffect(() => {
     let active = true;
 
     const hydrateSession = async () => {
-      const savedToken = localStorage.getItem(TOKEN_KEY);
       const savedUser = localStorage.getItem(USER_KEY);
+      localStorage.removeItem("foodhub_token");
 
-      if (savedToken && active) {
-        setToken(savedToken);
-      }
       if (savedUser && active) {
         try {
           setUser(JSON.parse(savedUser) as User);
@@ -50,15 +55,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const me = savedToken ? await authService.me(savedToken) : await authService.session();
+        const me = await authService.session();
         if (!active) return;
         setUser(me);
         localStorage.setItem(USER_KEY, JSON.stringify(me));
       } catch {
         if (!active) return;
-        if (!savedToken) {
-          setUser(null);
-        }
+        setUser(null);
       } finally {
         if (active) {
           setLoading(false);
@@ -72,17 +75,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      clearAuthState();
+      toast.error("Your session expired. Please login again.");
+    };
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+    return () => {
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+    };
+  }, [clearAuthState]);
+
   const login = async (email: string, password: string): Promise<User> => {
     const payload = await authService.login({ email, password });
     const accessToken = payload.accessToken ?? payload.token;
     const nextUser = payload.user ?? (accessToken ? await authService.me(accessToken) : await authService.session());
-    if (accessToken) {
-      setToken(accessToken);
-      localStorage.setItem(TOKEN_KEY, accessToken);
-    } else {
-      setToken(null);
-      localStorage.removeItem(TOKEN_KEY);
-    }
+    setToken(accessToken ?? null);
+    localStorage.removeItem("foodhub_token");
     setUser(nextUser);
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
     return nextUser;
@@ -98,15 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Clear local auth state even if server logout fails.
     }
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-  }, [token]);
+    clearAuthState();
+  }, [clearAuthState, token]);
 
   const loginWithGoogle = useCallback(async () => {
     if (typeof window === "undefined") return;
-    const payload = await authService.googleLogin(window.location.origin);
+    const callbackURL = `${window.location.origin}/auth/callback`;
+    const payload = await authService.googleLogin(callbackURL);
     if (!payload.url) {
       throw new Error("Google login is not configured");
     }
@@ -115,13 +123,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshMe = useCallback(async () => {
     try {
-      const me = token ? await authService.me(token) : await authService.session();
+      const me = await authService.session();
       setUser(me);
       localStorage.setItem(USER_KEY, JSON.stringify(me));
     } catch {
       await logout();
     }
-  }, [logout, token]);
+  }, [logout]);
 
   const value = useMemo(
     () => ({ user, token, loading, login, register, logout, loginWithGoogle, refreshMe }),

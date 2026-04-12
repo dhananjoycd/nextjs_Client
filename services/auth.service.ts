@@ -17,16 +17,18 @@ export const authService = {
     return apiRequest("/api/v1/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
+      skipAuthHandling: true,
     });
   },
   login(payload: { email: string; password: string }) {
     return apiRequest<LoginResponse>("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify(payload),
+      skipAuthHandling: true,
     });
   },
-  me(token: string) {
-    return apiRequest<User>("/api/v1/auth/me", { token });
+  me(token?: string | null) {
+    return apiRequest<User>("/api/v1/auth/me", token ? { token } : {});
   },
   session() {
     return apiRequest<User>("/api/v1/auth/me");
@@ -35,12 +37,14 @@ export const authService = {
     return apiRequest<{ success: boolean }>("/api/v1/auth/logout", {
       method: "POST",
       token: token ?? undefined,
+      skipAuthHandling: true,
     });
   },
   googleLogin(callbackURL: string) {
     return apiRequest<{ url: string; redirect: boolean }>("/api/v1/auth/google-login", {
       method: "POST",
       body: JSON.stringify({ callbackURL }),
+      skipAuthHandling: true,
     });
   },
 };

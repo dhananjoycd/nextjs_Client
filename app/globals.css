@@ -9,6 +9,8 @@
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
   --border: #e2e8f0;
+  --font-body: "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
+  --font-title: Georgia, "Times New Roman", serif;
 }
 
 @theme inline {

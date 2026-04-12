@@ -2,11 +2,11 @@ import { apiRequest } from "@/lib/api";
 import type { User } from "@/types";
 
 export const userService = {
-  me(token: string) {
-    return apiRequest<User>("/api/v1/users/me", { token });
+  me(token?: string | null) {
+    return apiRequest<User>("/api/v1/users/me", token ? { token } : {});
   },
   updateMe(
-    token: string,
+    token: string | null | undefined,
     payload: {
       name?: string;
       phone?: string;
@@ -16,7 +16,7 @@ export const userService = {
   ) {
     return apiRequest<User>("/api/v1/users/me", {
       method: "PATCH",
-      token,
+      ...(token ? { token } : {}),
       body: JSON.stringify(payload),
     });
   },

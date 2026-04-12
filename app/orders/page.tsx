@@ -9,6 +9,7 @@ import { Protected } from "@/components/Protected";
 import { useAuth } from "@/components/AuthProvider";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { Badge, Button, Card } from "@/components/ui";
+import { routes } from "@/lib/routes";
 import { ordersService } from "@/services";
 import type { Order } from "@/types";
 
@@ -29,7 +30,7 @@ function formatDate(value?: string) {
 }
 
 export default function OrdersPage() {
-  const { token } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +41,7 @@ export default function OrdersPage() {
   const orderStatusRef = useRef<Record<string, string>>({});
 
   const fetchOrders = useCallback(async (silent = false) => {
-    if (!token) return;
+    if (authLoading || !user) return;
     try {
       if (!silent) setLoading(true);
       const data = await ordersService.my(token);
@@ -64,19 +65,19 @@ export default function OrdersPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [token]);
+  }, [authLoading, token, user]);
 
   useEffect(() => {
     void fetchOrders();
   }, [fetchOrders]);
 
   useEffect(() => {
-    if (!token) return;
+    if (authLoading || !user) return;
     const timer = window.setInterval(() => {
       void fetchOrders(true);
     }, LIVE_REFRESH_MS);
     return () => window.clearInterval(timer);
-  }, [fetchOrders, token]);
+  }, [authLoading, fetchOrders, user]);
 
   useEffect(() => {
     if (paymentToastShown.current) return;
@@ -95,7 +96,7 @@ export default function OrdersPage() {
   }
 
   async function cancelOrder(orderId: string) {
-    if (!token) return;
+    if (!user) return;
     try {
       setUpdatingId(orderId);
       await ordersService.updateStatus(token, orderId, "CANCELED");
@@ -126,9 +127,9 @@ export default function OrdersPage() {
         description="Track all your placed orders with detailed status."
         hideNav
         links={[
-          { href: "/cart", label: "Cart" },
-          { href: "/orders", label: "Orders", active: true },
-          { href: "/profile", label: "Profile" },
+          { href: routes.cart, label: "Cart" },
+          { href: routes.customerOrders, label: "Orders", active: true },
+          { href: routes.customerProfile, label: "Profile" },
         ]}
       >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -184,7 +185,7 @@ export default function OrdersPage() {
                   <p className="text-sm text-slate-600">Total: ${total.toFixed(2)}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/orders/${order.id}`}>
+                      <Link href={routes.customerOrderDetails(order.id)}>
                         View Details <ArrowRight className="size-4" />
                       </Link>
                     </Button>

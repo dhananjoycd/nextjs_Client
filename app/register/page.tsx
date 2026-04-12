@@ -4,11 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { Eye, EyeOff, Facebook, Loader2, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { getRoleHomePath } from "@/lib/auth";
+import { routes } from "@/lib/routes";
+
+function validatePassword(value: string) {
+  if (value.length < 8) return "Password must be at least 8 characters";
+  if (!/[a-z]/.test(value)) return "Password must include a lowercase letter";
+  if (!/[A-Z]/.test(value)) return "Password must include an uppercase letter";
+  if (!/\d/.test(value)) return "Password must include a number";
+  if (!/[^A-Za-z0-9]/.test(value)) return "Password must include a symbol";
+  return undefined;
+}
 
 export default function RegisterPage() {
   const { register, loginWithGoogle, user } = useAuth();
@@ -30,7 +40,7 @@ export default function RegisterPage() {
     onSubmit: async ({ value }) => {
       await register(value);
       toast.success("Registration successful. Please login.");
-      router.push("/login");
+      router.push(routes.login);
     },
   });
 
@@ -97,7 +107,7 @@ export default function RegisterPage() {
           <form.Field
             name="password"
             validators={{
-              onChange: ({ value }) => (value.length < 6 ? "Password must be at least 6 characters" : undefined),
+              onChange: ({ value }) => validatePassword(value),
             }}
           >
             {(field) => (
@@ -162,7 +172,7 @@ export default function RegisterPage() {
               <span className="bg-white px-2 text-slate-500">Or start with</span>
             </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="space-y-2">
             <Button
               type="button"
               variant="outline"
@@ -174,15 +184,13 @@ export default function RegisterPage() {
             >
               Google
             </Button>
-            <Button type="button" variant="outline" onClick={() => toast.info("Facebook signup will be connected in Phase 2 backend auth setup.")}>
-              <Facebook className="size-4" /> Facebook
-            </Button>
+            <p className="text-xs text-slate-500">Google sign-up is live now. More social providers can be added later on the same auth foundation.</p>
           </div>
         </div>
 
         <p className="text-sm text-slate-600">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-emerald-700 hover:text-emerald-600">
+          <Link href={routes.login} className="font-semibold text-emerald-700 hover:text-emerald-600">
             Login
           </Link>
         </p>

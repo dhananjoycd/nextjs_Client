@@ -4,16 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { Eye, EyeOff, Facebook, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { Button, Card, Input } from "@/components/ui";
 import { getRoleHomePath } from "@/lib/auth";
+import { routes } from "@/lib/routes";
 
 const demoUsers = [
-  { label: "Customer Demo", email: "customer@foodhub.app", password: "Pass1234!" },
-  { label: "Provider Demo", email: "provider@foodhub.app", password: "Pass1234!" },
-  { label: "Admin Demo", email: "admin@foodhub.app", password: "Pass1234!" },
+  { label: "Customer Demo", email: "rahim.uddin@gmail.com", password: "Test@1234" },
+  { label: "Provider Demo", email: "dhakabiryani@foodhub.com", password: "Test@1234" },
+  { label: "Admin Demo", email: "admin@foodhub.com", password: "Test@1234" },
 ] as const;
 
 export default function LoginPage() {
@@ -182,7 +183,7 @@ export default function LoginPage() {
               <span className="bg-white px-2 text-slate-500">Or continue with</span>
             </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="space-y-2">
             <Button
               type="button"
               variant="outline"
@@ -194,15 +195,13 @@ export default function LoginPage() {
             >
               Google
             </Button>
-            <Button type="button" variant="outline" onClick={() => toast.info("Facebook login will be connected in Phase 2 backend auth setup.")}>
-              <Facebook className="size-4" /> Facebook
-            </Button>
+            <p className="text-xs text-slate-500">Google social sign-in is enabled. Additional providers can be connected later without changing this flow.</p>
           </div>
         </div>
 
         <p className="text-sm text-slate-600">
           New to FoodHub?{" "}
-          <Link href="/register" className="font-semibold text-emerald-700 hover:text-emerald-600">
+          <Link href={routes.register} className="font-semibold text-emerald-700 hover:text-emerald-600">
             Create an account
           </Link>
         </p>
