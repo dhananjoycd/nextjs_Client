@@ -4,6 +4,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Container } from "@/components/layout/container";
+import { OneTimeFeaturePopup } from "@/components/one-time-feature-popup";
 import { AppToaster } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="app-shell">
             <Header />
+            <OneTimeFeaturePopup />
             <main className="site-main">
               <Container>{children}</Container>
             </main>

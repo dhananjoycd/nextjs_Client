@@ -244,7 +244,7 @@ export function Navbar() {
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[92vw] max-w-sm space-y-6 border-l-white/70 bg-white/95 px-5 backdrop-blur-xl">
+          <SheetContent side="right" className="h-dvh w-[92vw] max-w-sm space-y-6 overflow-y-auto border-l-white/70 bg-white/95 px-5 backdrop-blur-xl">
             <SheetTitle>Menu</SheetTitle>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
