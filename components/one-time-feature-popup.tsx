@@ -14,10 +14,8 @@ const QUICK_FEATURES = [
 
 export function OneTimeFeaturePopup() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const seen = window.localStorage.getItem(POPUP_SEEN_KEY);
     if (seen) return;
 
@@ -31,8 +29,6 @@ export function OneTimeFeaturePopup() {
   function markSeen() {
     window.localStorage.setItem(POPUP_SEEN_KEY, "true");
   }
-
-  if (!mounted) return null;
 
   return (
     <Dialog

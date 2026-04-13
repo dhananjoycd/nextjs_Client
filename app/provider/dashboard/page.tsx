@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Protected } from "@/components/Protected";
 import { DashboardShell } from "@/components/dashboard/shell";
@@ -23,7 +23,6 @@ import {
   Textarea,
 } from "@/components/ui";
 import { categoriesService } from "@/services";
-import { routes } from "@/lib/routes";
 import type { Category, Meal, Order, Provider } from "@/types";
 
 type ProviderMeal = Meal & {
@@ -322,24 +321,6 @@ export default function ProviderDashboardPage() {
       mealFormSeedRef.current = "";
     }
   }, [openMealDialog]);
-
-  function openCreateMeal() {
-    setEditingMeal(null);
-    mealForm.reset({
-      categoryId: "",
-      title: "",
-      description: "",
-      price: "",
-      imageUrl: "",
-      isAvailable: "true",
-    });
-    setOpenMealDialog(true);
-  }
-
-  function openEditMeal(meal: ProviderMeal) {
-    setEditingMeal(meal);
-    setOpenMealDialog(true);
-  }
 
   async function confirmDeleteMeal() {
     if (!user || !deletingMeal) return;

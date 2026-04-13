@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, BrainCircuit, ShoppingCart, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingCart, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge, Button, Card, Skeleton } from "@/components/ui";
 import { addMealToCart } from "@/lib/cart";

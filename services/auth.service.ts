@@ -27,11 +27,16 @@ export const authService = {
       skipAuthHandling: true,
     });
   },
-  me(token?: string | null) {
-    return apiRequest<User>("/api/v1/auth/me", token ? { token } : {});
+  me(token?: string | null, options?: { skipAuthHandling?: boolean }) {
+    return apiRequest<User>("/api/v1/auth/me", {
+      ...(token ? { token } : {}),
+      skipAuthHandling: options?.skipAuthHandling,
+    });
   },
-  session() {
-    return apiRequest<User>("/api/v1/auth/me");
+  session(options?: { skipAuthHandling?: boolean }) {
+    return apiRequest<User>("/api/v1/auth/me", {
+      skipAuthHandling: options?.skipAuthHandling,
+    });
   },
   logout(token?: string | null) {
     return apiRequest<{ success: boolean }>("/api/v1/auth/logout", {

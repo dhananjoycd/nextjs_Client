@@ -79,3 +79,15 @@ export function SheetTitle({
     <DialogPrimitive.Title className={cn("text-lg font-semibold", className)} {...props} />
   );
 }
+
+export function SheetDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      className={cn("text-sm text-slate-600", className)}
+      {...props}
+    />
+  );
+}

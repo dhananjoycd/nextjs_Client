@@ -3,9 +3,21 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, LogOut, Menu, ShoppingBag } from "lucide-react";
+import {
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles,
+  UserCircle2,
+} from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import {
+  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -15,65 +27,72 @@ import {
   DropdownMenuTrigger,
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui";
-import { getRoleHomePath } from "@/lib/auth";
+import { getRoleHomePath, normalizeRole } from "@/lib/auth";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
-const primaryLinks = [
-  { href: routes.home, label: "Home" },
-  { href: "/categories", label: "Categories" },
-  { href: routes.meals, label: "Meals" },
-  { href: routes.providers, label: "Providers" },
-];
-
-const exploreLinks = [
-  { href: routes.about, label: "About" },
-  { href: routes.contact, label: "Contact" },
-  { href: "/faq", label: "FAQ" },
-];
-
-const policyLinks = [
-  { href: routes.privacy, label: "Privacy Policy" },
-  { href: routes.terms, label: "Terms of Service" },
-];
+type NavItem = {
+  href: string;
+  label: string;
+  description?: string;
+};
 
 type RoleKey = "CUSTOMER" | "PROVIDER" | "ADMIN";
 
-const roleFeatureLinks: Record<RoleKey, { href: string; label: string }[]> = {
+const primaryLinks: NavItem[] = [
+  { href: routes.home, label: "Home", description: "Marketplace overview" },
+  { href: "/categories", label: "Categories", description: "Browse curated collections" },
+  { href: routes.meals, label: "Meals", description: "Explore trending meals" },
+  { href: routes.providers, label: "Providers", description: "Discover partner kitchens" },
+];
+
+const secondaryLinks: NavItem[] = [
+  { href: routes.about, label: "About", description: "Brand story and marketplace vision" },
+  { href: routes.contact, label: "Support", description: "Contact and AI assistance" },
+  { href: "/faq", label: "FAQ", description: "Fast answers and guidance" },
+];
+
+const utilityLinks: NavItem[] = [
+  { href: routes.privacy, label: "Privacy" },
+  { href: routes.terms, label: "Terms" },
+];
+
+const roleFeatureLinks: Record<
+  RoleKey,
+  Array<NavItem & { emphasis?: "primary" | "secondary" }>
+> = {
   CUSTOMER: [
-    { href: routes.customerDashboard, label: "Dashboard" },
-    { href: routes.cart, label: "Cart" },
-    { href: routes.customerOrders, label: "My Orders" },
-    { href: routes.customerWishlist, label: "Wishlist" },
-    { href: routes.customerProfile, label: "Profile Settings" },
+    { href: routes.customerDashboard, label: "Dashboard", description: "Your account hub", emphasis: "primary" },
+    { href: routes.cart, label: "Cart", description: "Review pending items", emphasis: "primary" },
+    { href: routes.customerOrders, label: "My Orders", description: "Track active and past orders" },
+    { href: routes.customerWishlist, label: "Wishlist", description: "Saved meals and favorites" },
+    { href: routes.customerProfile, label: "Profile Settings", description: "Manage personal details" },
   ],
   PROVIDER: [
-    { href: routes.providerDashboard, label: "Dashboard" },
-    { href: "/dashboard/provider/meals", label: "Manage Meals" },
-    { href: "/dashboard/provider/orders", label: "Order Queue" },
-    { href: "/dashboard/provider/earnings", label: "Earnings" },
-    { href: "/dashboard/provider/profile", label: "Business Profile" },
+    { href: routes.providerDashboard, label: "Dashboard", description: "Business performance", emphasis: "primary" },
+    { href: "/dashboard/provider/meals", label: "Manage Meals", description: "Update listings and pricing", emphasis: "primary" },
+    { href: "/dashboard/provider/orders", label: "Order Queue", description: "Review incoming fulfillment" },
+    { href: "/dashboard/provider/earnings", label: "Earnings", description: "Revenue and payouts" },
+    { href: "/dashboard/provider/profile", label: "Business Profile", description: "Kitchen and brand information" },
   ],
   ADMIN: [
-    { href: routes.adminDashboard, label: "Admin Overview" },
-    { href: "/dashboard/admin/users", label: "Users" },
-    { href: "/dashboard/admin/providers", label: "Providers" },
-    { href: "/dashboard/admin/meals", label: "Meals" },
-    { href: "/dashboard/admin/orders", label: "Orders" },
-    { href: "/dashboard/admin/reviews", label: "Reviews" },
-    { href: "/dashboard/admin/settings", label: "Settings" },
-    { href: "/dashboard/admin/audit-logs", label: "Audit Logs" },
+    { href: routes.adminDashboard, label: "Admin Overview", description: "Operational control center", emphasis: "primary" },
+    { href: "/dashboard/admin/users", label: "Users", description: "Customer and staff accounts", emphasis: "primary" },
+    { href: "/dashboard/admin/providers", label: "Providers", description: "Marketplace partner health" },
+    { href: "/dashboard/admin/orders", label: "Orders", description: "System-wide fulfillment tracking" },
+    { href: "/dashboard/admin/reviews", label: "Reviews", description: "Trust and quality moderation" },
+    { href: "/dashboard/admin/settings", label: "Settings", description: "Platform configuration" },
+    { href: "/dashboard/admin/audit-logs", label: "Audit Logs", description: "Operational activity history" },
   ],
 };
 
 function getRoleFeatureLinks(role?: string) {
-  if (role === "CUSTOMER") return roleFeatureLinks.CUSTOMER;
-  if (role === "PROVIDER") return roleFeatureLinks.PROVIDER;
-  if (role === "ADMIN") return roleFeatureLinks.ADMIN;
-  return [];
+  const normalized = normalizeRole(role);
+  return roleFeatureLinks[normalized] ?? [];
 }
 
 function isLinkActive(pathname: string, href: string) {
@@ -81,23 +100,69 @@ function isLinkActive(pathname: string, href: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+function NavPill({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
   return (
     <Link
       href={href}
       className={cn(
-        "relative rounded-full px-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-900",
-        active && "text-slate-950",
+        "rounded-full px-4 py-2 text-sm font-medium transition-all",
+        active
+          ? "bg-slate-900 text-white shadow-sm"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
       )}
     >
       {label}
-      <span
-        className={cn(
-          "absolute -bottom-2 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-slate-900 transition-all duration-300",
-          active ? "w-6" : "w-0 group-hover:w-6",
-        )}
-      />
     </Link>
+  );
+}
+
+function MobileNavSection({
+  title,
+  items,
+  pathname,
+  onNavigate,
+}: {
+  title: string;
+  items: NavItem[];
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="px-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {title}
+      </p>
+      <div className="space-y-2">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={cn(
+              "block rounded-2xl border px-4 py-3 transition-colors",
+              isLinkActive(pathname, item.href)
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+            )}
+          >
+            <p className="text-sm font-semibold">{item.label}</p>
+            {item.description ? (
+              <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -108,278 +173,342 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 14);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 12);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const roleLinks = useMemo(() => getRoleFeatureLinks(user?.role), [user?.role]);
   const roleHome = useMemo(() => getRoleHomePath(user?.role), [user?.role]);
-
+  const role = normalizeRole(user?.role);
   const initial = user?.name?.trim().charAt(0).toUpperCase() || "U";
+  const roleSummary =
+    role === "ADMIN"
+      ? "Platform controls"
+      : role === "PROVIDER"
+        ? "Kitchen operations"
+        : "Orders and profile";
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 transition-all duration-300",
+        "sticky top-0 z-50 border-b transition-all duration-300",
         scrolled
-          ? "border-b border-white/60 bg-white/75 shadow-[0_16px_45px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
-          : "bg-white/55 backdrop-blur-xl",
+          ? "border-white/70 bg-white/86 shadow-[0_18px_55px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
+          : "border-transparent bg-white/72 backdrop-blur-xl",
       )}
     >
-      <nav className="mx-auto flex min-h-19 max-w-7xl items-center gap-3 px-4 py-3 sm:px-5 lg:px-6">
-        <Link href={routes.home} className="inline-flex shrink-0 items-center gap-3 text-lg font-bold">
-          <span className="inline-flex size-9 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm ring-1 ring-slate-900/10">
-            <ShoppingBag className="size-4" />
-          </span>
-          <span className="leading-none">
-            FoodHub
-            <span className="hidden text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:block">
-              Curated meals
+      <nav className="mx-auto max-w-7xl px-4 py-3 sm:px-5 lg:px-6">
+        <div className="flex items-center gap-3">
+          <Link href={routes.home} className="flex min-w-0 items-center gap-3">
+            <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f172a,#1e293b)] text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]">
+              <ShoppingBag className="size-4.5" />
             </span>
-          </span>
-        </Link>
-
-        <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
-          <div className="flex w-full max-w-3xl items-center justify-center gap-5 rounded-full border border-slate-200/80 bg-white/85 px-5 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-            {primaryLinks.map((link) => (
-              <div className="group" key={link.href}>
-                <NavLink href={link.href} label={link.label} active={isLinkActive(pathname, link.href)} />
-              </div>
-            ))}
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-900"
-                >
-                  More <ChevronDown className="size-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-64 rounded-2xl border-white/70 bg-white/95 backdrop-blur-xl">
-                <DropdownMenuLabel>Explore</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {exploreLinks.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild>
-                    <Link href={link.href}>{link.label}</Link>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                {policyLinks.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild>
-                    <Link href={link.href}>{link.label}</Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
-          {!loading && !user ? (
-            <>
-              <Button asChild variant="ghost" size="sm" className="rounded-full px-4 text-slate-700 hover:bg-white/70">
-                <Link href={routes.login}>Login</Link>
-              </Button>
-              <Button asChild size="sm" className="rounded-full px-5 shadow-sm">
-                <Link href={routes.register}>Get Started</Link>
-              </Button>
-            </>
-          ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full border border-white/65 bg-white/85 px-2.5 shadow-sm hover:bg-white"
-                  aria-label="Open account menu"
-                >
-                  <span className="inline-flex size-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-                    {initial}
-                  </span>
-                  <span className="hidden max-w-40 truncate text-sm font-medium text-slate-700 lg:block">
-                    {user.name}
-                  </span>
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    {user.role}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 rounded-2xl border-white/70 bg-white/95 p-1.5 backdrop-blur-xl">
-                <DropdownMenuLabel className="space-y-1 rounded-xl bg-slate-50 px-3 py-2.5">
-                  <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
-                  <p className="truncate text-xs text-slate-600">{user.email}</p>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-
-                {roleLinks.slice(0, 6).map((link) => (
-                  <DropdownMenuItem key={link.href} asChild>
-                    <Link href={link.href}>
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-
-                <DropdownMenuSeparator />
-        
-                <DropdownMenuItem onClick={logout} className="text-rose-600 focus:text-rose-600">
-                  <LogOut className="mr-2 size-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
-        </div>
-
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild className="ml-auto md:hidden lg:hidden">
-            <Button
-              size="icon"
-              variant="secondary"
-              aria-label="Open menu"
-              className="shrink-0 rounded-full border border-white/65 bg-white/75 shadow-sm"
-            >
-              <Menu className="size-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="h-dvh w-[92vw] max-w-sm space-y-6 overflow-y-auto border-l-white/70 bg-white/95 px-5 backdrop-blur-xl">
-            <SheetTitle>Menu</SheetTitle>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                {user ? user.role : "Guest browsing"}
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold tracking-tight text-slate-950 sm:text-lg">
+                FoodHub
               </p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">
-                {user?.name ?? "Discover your next meal"}
-              </p>
-              <p className="text-sm text-slate-600">
-                {user ? `${user.role} access active` : "Browse meals, providers, and support pages from one place."}
+              <p className="hidden text-[11px] uppercase tracking-[0.22em] text-slate-500 sm:block">
+                Role-aware commerce
               </p>
             </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Explore</p>
-                <div className="flex flex-col gap-2">
-                  {primaryLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "rounded-lg px-3 py-2.5 text-sm font-medium",
-                        isLinkActive(pathname, link.href)
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "text-slate-700 hover:bg-slate-100",
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+          </Link>
 
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Explore</p>
-                <div className="flex flex-col gap-2">
-                  {exploreLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "rounded-lg px-3 py-2.5 text-sm font-medium",
-                        isLinkActive(pathname, link.href)
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "text-slate-700 hover:bg-slate-100",
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Policies</p>
-                <div className="flex flex-col gap-2">
-                  {policyLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "rounded-lg px-3 py-2.5 text-sm font-medium",
-                        isLinkActive(pathname, link.href)
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "text-slate-700 hover:bg-slate-100",
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {roleLinks.length > 0 && (
-                <div className="space-y-2">
-                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Role Features</p>
-                  <div className="flex flex-col gap-2">
-                    {roleLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "rounded-lg px-3 py-2.5 text-sm font-medium",
-                          isLinkActive(pathname, link.href)
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "text-slate-700 hover:bg-slate-100",
-                        )}
-                      >
-                        {link.label}
+          <div className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
+            <div className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/92 p-1.5 shadow-[0_12px_28px_rgba(15,23,42,0.06)]">
+              {primaryLinks.map((link) => (
+                <NavPill
+                  key={link.href}
+                  href={link.href}
+                  label={link.label}
+                  active={isLinkActive(pathname, link.href)}
+                />
+              ))}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full px-4 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  >
+                    Explore <ChevronDown className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="center"
+                  className="w-72 rounded-3xl border-white/80 bg-white/96 p-2 backdrop-blur-2xl"
+                >
+                  <DropdownMenuLabel className="px-3 py-2 text-xs uppercase tracking-[0.18em] text-slate-500">
+                    More Pages
+                  </DropdownMenuLabel>
+                  {secondaryLinks.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild className="rounded-2xl px-3 py-3">
+                      <Link href={item.href} className="flex flex-col items-start">
+                        <span className="font-medium text-slate-900">{item.label}</span>
+                        {item.description ? (
+                          <span className="text-xs text-slate-500">{item.description}</span>
+                        ) : null}
                       </Link>
-                    ))}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  {utilityLinks.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild className="rounded-2xl px-3 py-2.5">
+                      <Link href={item.href}>{item.label}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <div className="ml-auto hidden items-center gap-2 md:flex">
+            {!loading && !user ? (
+              <>
+                <Button asChild variant="ghost" size="sm" className="rounded-full px-4">
+                  <Link href={routes.login}>Login</Link>
+                </Button>
+                <Button asChild size="sm" className="rounded-full px-5 shadow-sm">
+                  <Link href={routes.register}>Get Started</Link>
+                </Button>
+              </>
+            ) : null}
+
+            {user ? (
+              <>
+                {role === "CUSTOMER" ? (
+                  <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 bg-white/90 px-4">
+                    <Link href={routes.cart}>
+                      <ShoppingCart className="size-4" />
+                      Cart
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm" className="rounded-full border-slate-200 bg-white/90 px-4">
+                    <Link href={roleHome}>
+                      <LayoutDashboard className="size-4" />
+                      {role === "ADMIN" ? "Admin" : "Dashboard"}
+                    </Link>
+                  </Button>
+                )}
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto rounded-[1.5rem] border border-slate-200/90 bg-white/92 px-2.5 py-2 shadow-sm hover:bg-white"
+                    >
+                      <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white">
+                        {initial}
+                      </span>
+                      <div className="hidden min-w-0 text-left lg:block">
+                        <p className="max-w-40 truncate text-sm font-semibold text-slate-900">
+                          {user.name}
+                        </p>
+                        <p className="truncate text-xs text-slate-500">{roleSummary}</p>
+                      </div>
+                      <Badge className="hidden rounded-full bg-emerald-100 text-emerald-700 lg:inline-flex">
+                        {role}
+                      </Badge>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-[22rem] rounded-3xl border-white/80 bg-white/97 p-2 backdrop-blur-2xl"
+                  >
+                    <DropdownMenuLabel className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3">
+                      <div className="flex items-start gap-3">
+                        <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white">
+                          {initial}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
+                          <p className="truncate text-xs text-slate-500">{user.email}</p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <Badge className="bg-emerald-100 text-emerald-700">{role}</Badge>
+                            <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                              {roleSummary}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </DropdownMenuLabel>
+
+                    <div className="grid gap-2 p-1.5">
+                      {roleLinks.map((link) => (
+                        <DropdownMenuItem key={link.href} asChild className="rounded-2xl px-3 py-3">
+                          <Link href={link.href} className="flex flex-col items-start">
+                            <span className="font-medium text-slate-900">{link.label}</span>
+                            {link.description ? (
+                              <span className="text-xs text-slate-500">{link.description}</span>
+                            ) : null}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+
+                    <DropdownMenuSeparator />
+
+                    <div className="grid gap-2 p-1.5">
+                      <DropdownMenuItem asChild className="rounded-2xl px-3 py-3">
+                        <Link href={routes.contact} className="flex items-center gap-2">
+                          <Sparkles className="size-4 text-emerald-600" />
+                          Support & help
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="rounded-2xl px-3 py-3">
+                        <Link href={routes.meals} className="flex items-center gap-2">
+                          <Search className="size-4 text-slate-500" />
+                          Explore marketplace
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={logout}
+                        className="rounded-2xl px-3 py-3 text-rose-600 focus:text-rose-600"
+                      >
+                        <LogOut className="size-4" />
+                        Sign out
+                      </DropdownMenuItem>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : null}
+          </div>
+
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="ml-auto md:hidden">
+              <Button
+                size="icon"
+                variant="outline"
+                className="rounded-full border-slate-200 bg-white/88 shadow-sm"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="size-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="h-dvh w-[92vw] max-w-sm overflow-y-auto border-l-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] px-5 pb-6 pt-5 backdrop-blur-2xl"
+            >
+              <SheetTitle>Navigation</SheetTitle>
+              <SheetDescription>
+                Browse the marketplace and open role-based tools from one menu.
+              </SheetDescription>
+
+              <div className="mt-5 space-y-5">
+                <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.96))] p-4 text-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+                  <div className="flex items-start gap-3">
+                    <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-white/14 text-sm font-semibold">
+                      {user ? initial : "F"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-[0.18em] text-emerald-200">
+                        {user ? role : "Guest access"}
+                      </p>
+                      <p className="mt-1 truncate text-lg font-semibold">
+                        {user?.name ?? "FoodHub navigation"}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-300">
+                        {user
+                          ? `Open ${roleSummary.toLowerCase()} and marketplace shortcuts.`
+                          : "Discover meals, provider pages, support resources, and account entry points."}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-            <div className="space-y-2 border-t border-slate-200 pt-4">
-              {!user ? (
-                <>
-                  <Button asChild variant="secondary" className="w-full">
-                    <Link href={routes.login} onClick={() => setMobileMenuOpen(false)}>
-                      Login
-                    </Link>
-                  </Button>
-                  <Button asChild className="w-full">
-                    <Link href={routes.register} onClick={() => setMobileMenuOpen(false)}>
-                      Register
-                    </Link>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link href={roleHome} onClick={() => setMobileMenuOpen(false)}>
-                      {user.role === "ADMIN" ? "Admin Panel" : user.role === "PROVIDER" ? "Provider Panel" : "My Dashboard"}
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      logout();
-                    }}
-                  >
-                    Logout
-                  </Button>
-                </>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
+
+                <MobileNavSection
+                  title="Marketplace"
+                  items={primaryLinks}
+                  pathname={pathname}
+                  onNavigate={() => setMobileMenuOpen(false)}
+                />
+
+                <MobileNavSection
+                  title="Explore"
+                  items={secondaryLinks}
+                  pathname={pathname}
+                  onNavigate={() => setMobileMenuOpen(false)}
+                />
+
+                {user ? (
+                  <MobileNavSection
+                    title={`${role} Tools`}
+                    items={roleLinks}
+                    pathname={pathname}
+                    onNavigate={() => setMobileMenuOpen(false)}
+                  />
+                ) : null}
+
+                <MobileNavSection
+                  title="Policies"
+                  items={utilityLinks}
+                  pathname={pathname}
+                  onNavigate={() => setMobileMenuOpen(false)}
+                />
+
+                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Quick Actions
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    {!user ? (
+                      <>
+                        <Button asChild variant="secondary" className="w-full rounded-2xl">
+                          <Link href={routes.login} onClick={() => setMobileMenuOpen(false)}>
+                            Login
+                          </Link>
+                        </Button>
+                        <Button asChild className="w-full rounded-2xl">
+                          <Link href={routes.register} onClick={() => setMobileMenuOpen(false)}>
+                            Create account
+                          </Link>
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button asChild className="w-full rounded-2xl">
+                          <Link href={roleHome} onClick={() => setMobileMenuOpen(false)}>
+                            <UserCircle2 className="size-4" />
+                            {role === "ADMIN"
+                              ? "Open admin workspace"
+                              : role === "PROVIDER"
+                                ? "Open provider workspace"
+                                : "Open customer dashboard"}
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full rounded-2xl border-slate-200"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            logout();
+                          }}
+                        >
+                          <LogOut className="size-4" />
+                          Sign out
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-emerald-100 bg-emerald-50/80 p-4 text-sm text-slate-700">
+                  <p className="inline-flex items-center gap-2 font-semibold text-slate-900">
+                    <ShieldCheck className="size-4 text-emerald-600" />
+                    Role-based navigation active
+                  </p>
+                  <p className="mt-2 text-slate-600">
+                    Menu items adapt to the signed-in role so each user sees the tools that matter most.
+                  </p>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </nav>
     </header>
   );

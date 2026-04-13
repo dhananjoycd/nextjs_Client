@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AUTH_EXPIRED_EVENT } from "@/lib/api";
 import { normalizeRole } from "@/lib/auth";
@@ -54,6 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const userRef = useRef<User | null>(null);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const clearAuthState = useCallback(() => {
     setUser(null);
@@ -84,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const me = await authService.session();
+        const me = await authService.session({ skipAuthHandling: true });
         if (!active) return;
         const normalized = normalizeUser(me);
         if (normalized) {
@@ -112,6 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleAuthExpired = () => {
+      if (!userRef.current) {
+        return;
+      }
       clearAuthState();
       toast.error("Your session expired. Please login again.");
     };
@@ -125,7 +133,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<User> => {
     const payload = await authService.login({ email, password });
     const accessToken = payload.accessToken ?? payload.token;
-    const rawUser = payload.user ?? (accessToken ? await authService.me(accessToken) : await authService.session());
+    const rawUser =
+      payload.user ??
+      (accessToken
+        ? await authService.me(accessToken, { skipAuthHandling: true })
+        : await authService.session({ skipAuthHandling: true }));
     const nextUser = normalizeUser(rawUser);
     if (!nextUser) {
       throw new Error("Could not read user profile from login response");
@@ -161,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshMe = useCallback(async () => {
     try {
-      const me = await authService.session();
+      const me = await authService.session({ skipAuthHandling: true });
       const normalized = normalizeUser(me);
       if (!normalized) {
         throw new Error("Invalid session user");
@@ -169,9 +181,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(normalized);
       localStorage.setItem(USER_KEY, JSON.stringify(normalized));
     } catch {
-      await logout();
+      clearAuthState();
+      throw new Error("Session refresh failed");
     }
-  }, [logout]);
+  }, [clearAuthState]);
 
   const value = useMemo(
     () => ({ user, token, loading, login, register, logout, loginWithGoogle, refreshMe }),

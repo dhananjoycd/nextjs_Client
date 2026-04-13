@@ -106,7 +106,7 @@ export default function ManageMealsPage() {
         }
       }
       setMeals(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load meals");
       setMeals([]);
     } finally {

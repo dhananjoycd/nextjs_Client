@@ -19,7 +19,7 @@ function getConfiguredAppUrl() {
 
 export const config = {
   appBaseUrl: getConfiguredAppUrl(),
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_URL,
+  apiBaseUrl: trimTrailingSlash(process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_URL),
   authCallbackPath: AUTH_CALLBACK_PATH,
   get authCallbackUrl() {
     return `${getConfiguredAppUrl()}${AUTH_CALLBACK_PATH}`;

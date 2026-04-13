@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BrainCircuit, Loader2, MessageCircleMore, Send } from "lucide-react";
+import { Loader2, MessageCircleMore, Send } from "lucide-react";
 import { Badge, Button, Card, Input } from "@/components/ui";
 import { aiService } from "@/services";
 import type { AiSupportChatResponse } from "@/types";

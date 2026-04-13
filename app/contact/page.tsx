@@ -9,24 +9,6 @@ const contactCards = [
   { title: "Visit office", value: "Dhaka, Bangladesh", href: "https://maps.google.com/?q=Dhaka,Bangladesh", icon: MapPin },
 ] as const;
 
-const faqs = [
-  {
-    question: "How do I place an order on FoodHub?",
-    answer:
-      "Browse meals, add your preferred items to cart, complete checkout with address and payment method, then track the order from the orders page.",
-  },
-  {
-    question: "Can providers manage their own menu?",
-    answer:
-      "Yes. Provider accounts can create, update, and remove menu items, then move incoming orders through each delivery stage from their dashboard.",
-  },
-  {
-    question: "What happens after payment success?",
-    answer:
-      "FoodHub verifies the payment session, creates the order record, clears the cart, and redirects the customer to the order history flow.",
-  },
-] as const;
-
 export default function ContactPage() {
   return (
     <div className="space-y-8 py-2">

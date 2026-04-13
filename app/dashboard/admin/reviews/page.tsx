@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { Protected } from "@/components/Protected";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { useAuth } from "@/components/AuthProvider";

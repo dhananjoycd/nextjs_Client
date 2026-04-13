@@ -44,7 +44,7 @@ export default function EarningsPage() {
         }
       }
       setOrders(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load earnings data");
       setOrders([]);
     } finally {

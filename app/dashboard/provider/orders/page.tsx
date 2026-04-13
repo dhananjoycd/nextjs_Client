@@ -74,7 +74,7 @@ export default function OrderQueuePage() {
         }
       }
       setOrders(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load orders");
       setOrders([]);
     } finally {
