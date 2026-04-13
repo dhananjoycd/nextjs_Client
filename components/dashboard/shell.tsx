@@ -7,14 +7,14 @@ import { Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type DashboardShellProps = {
-  title: string;
+  title?: string;
   description?: string;
-  links: Array<{ href: string; label: string; active?: boolean }>;
+  links?: Array<{ href: string; label: string; active?: boolean }>;
   hideNav?: boolean;
   children: React.ReactNode;
 };
 
-export function DashboardShell({ title, description, links, hideNav = false, children }: DashboardShellProps) {
+export function DashboardShell({ title, description, links = [], hideNav = false, children }: DashboardShellProps) {
   const pathname = usePathname();
   const [hash, setHash] = useState("");
 

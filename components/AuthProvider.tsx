@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AUTH_EXPIRED_EVENT } from "@/lib/api";
+import { normalizeRole } from "@/lib/auth";
 import { config } from "@/lib/config";
 import { authService } from "@/services";
 import type { User } from "@/lib/types";
@@ -28,6 +29,27 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const USER_KEY = "foodhub_user";
 
+function normalizeUser(input: unknown): User | null {
+  if (!input || typeof input !== "object") return null;
+  const maybeRecord = input as Record<string, unknown>;
+  const candidate =
+    maybeRecord.user && typeof maybeRecord.user === "object"
+      ? (maybeRecord.user as Record<string, unknown>)
+      : maybeRecord;
+
+  const id = String(candidate.id ?? "").trim();
+  const email = String(candidate.email ?? "").trim();
+  if (!id || !email) return null;
+
+  return {
+    ...(candidate as User),
+    id,
+    email,
+    name: String(candidate.name ?? "").trim(),
+    role: normalizeRole(candidate.role as User["role"]),
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -49,7 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (savedUser && active) {
         try {
-          setUser(JSON.parse(savedUser) as User);
+          const parsedUser = normalizeUser(JSON.parse(savedUser));
+          if (parsedUser) {
+            setUser(parsedUser);
+            localStorage.setItem(USER_KEY, JSON.stringify(parsedUser));
+          } else {
+            localStorage.removeItem(USER_KEY);
+          }
         } catch {
           localStorage.removeItem(USER_KEY);
         }
@@ -58,8 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const me = await authService.session();
         if (!active) return;
-        setUser(me);
-        localStorage.setItem(USER_KEY, JSON.stringify(me));
+        const normalized = normalizeUser(me);
+        if (normalized) {
+          setUser(normalized);
+          localStorage.setItem(USER_KEY, JSON.stringify(normalized));
+        } else {
+          setUser(null);
+          localStorage.removeItem(USER_KEY);
+        }
       } catch {
         if (!active) return;
         setUser(null);
@@ -91,7 +125,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<User> => {
     const payload = await authService.login({ email, password });
     const accessToken = payload.accessToken ?? payload.token;
-    const nextUser = payload.user ?? (accessToken ? await authService.me(accessToken) : await authService.session());
+    const rawUser = payload.user ?? (accessToken ? await authService.me(accessToken) : await authService.session());
+    const nextUser = normalizeUser(rawUser);
+    if (!nextUser) {
+      throw new Error("Could not read user profile from login response");
+    }
     setToken(accessToken ?? null);
     localStorage.removeItem("foodhub_token");
     setUser(nextUser);
@@ -124,8 +162,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshMe = useCallback(async () => {
     try {
       const me = await authService.session();
-      setUser(me);
-      localStorage.setItem(USER_KEY, JSON.stringify(me));
+      const normalized = normalizeUser(me);
+      if (!normalized) {
+        throw new Error("Invalid session user");
+      }
+      setUser(normalized);
+      localStorage.setItem(USER_KEY, JSON.stringify(normalized));
     } catch {
       await logout();
     }

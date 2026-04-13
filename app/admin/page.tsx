@@ -21,7 +21,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { adminService, categoriesService, ordersService } from "@/services";
-import { routes } from "@/lib/routes";
+import { ADMIN_NAV_LINKS } from "@/app/dashboard/admin/_shared";
 import type { Category, Order, User } from "@/types";
 
 const PAGE_SIZE = 10;
@@ -312,13 +312,7 @@ export default function AdminPage() {
       <DashboardShell
         title="Admin Dashboard"
         description="Monitor users, orders, and categories."
-        links={[
-          { href: routes.adminDashboard, label: "Overview" },
-          { href: `${routes.adminDashboard}#analytics`, label: "Analytics" },
-          { href: `${routes.adminDashboard}#users`, label: "Users" },
-          { href: `${routes.adminDashboard}#orders`, label: "Orders" },
-          { href: `${routes.adminDashboard}#categories`, label: "Categories" },
-        ]}
+        links={ADMIN_NAV_LINKS}
       >
         {loading ? (
           <Card>Loading admin dashboard...</Card>

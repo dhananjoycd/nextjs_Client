@@ -108,22 +108,25 @@ export default function ProviderDashboardPage() {
     try {
       if (!silent) setLoading(true);
 
-      const providerScopeIds = new Set<string>([String(user.id ?? "").trim().toLowerCase()]);
+      const userScopeId = String(user.id ?? "").trim().toLowerCase();
+      const providerEntityIds = new Set<string>();
       try {
         const providerList = await apiRequest<Provider[]>("/api/v1/providers", { token });
         for (const provider of Array.isArray(providerList) ? providerList : []) {
           const providerUserId = String(provider.user?.id ?? "").trim().toLowerCase();
           const providerId = String(provider.id ?? "").trim().toLowerCase();
-          if (providerUserId && providerUserId === String(user.id).trim().toLowerCase() && providerId) {
-            providerScopeIds.add(providerId);
+          if (providerUserId && providerUserId === userScopeId && providerId) {
+            providerEntityIds.add(providerId);
           }
         }
       } catch {
-        // Keep using authenticated user id when provider list is unavailable.
+        // Continue with fallback endpoints when provider lookup is unavailable.
       }
 
+      const ownershipScopeIds = new Set<string>([userScopeId, ...Array.from(providerEntityIds)]);
+
       const mealEndpoints = [
-        ...Array.from(providerScopeIds).map(
+        ...Array.from(providerEntityIds).map(
           (id) => `/api/v1/meals?providerId=${encodeURIComponent(id)}&limit=100`,
         ),
         "/api/v1/meals/my",
@@ -161,7 +164,7 @@ export default function ProviderDashboardPage() {
         const providerRecord = (meal as Meal & { provider?: { user?: { id?: string }; userId?: string } }).provider;
         const providerUserId = String(providerRecord?.user?.id ?? providerRecord?.userId ?? "").trim().toLowerCase();
 
-        return [directProviderId, providerId, providerUserId].some((id) => providerScopeIds.has(id));
+        return [directProviderId, providerId, providerUserId].some((id) => ownershipScopeIds.has(id));
       });
 
       setOrders(normalizedOrders);
@@ -404,10 +407,11 @@ export default function ProviderDashboardPage() {
         title="Provider Dashboard"
         description="Manage menu items, incoming orders, and delivery pipeline."
         links={[
-          { href: routes.providerDashboard, label: "Overview" },
-          { href: `${routes.providerDashboard}#provider-analytics`, label: "Analytics" },
-          { href: `${routes.providerDashboard}#incoming-orders`, label: "Incoming Orders" },
-          { href: `${routes.providerDashboard}#menu-management`, label: "Menu Management" },
+          { href: "/dashboard/provider", label: "Dashboard" },
+          { href: "/dashboard/provider/meals", label: "Manage Meals" },
+          { href: "/dashboard/provider/orders", label: "Order Queue" },
+          { href: "/dashboard/provider/earnings", label: "Earnings" },
+          { href: "/dashboard/provider/profile", label: "Business Profile" },
         ]}
       >
         {loading ? (
@@ -526,46 +530,7 @@ export default function ProviderDashboardPage() {
               )}
             </Card>
 
-            <Card id="menu-management" className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 className="text-xl">Menu Management</h2>
-                  <p className="text-sm text-slate-600">Add, edit, and remove your menu items.</p>
-                </div>
-                <Button onClick={openCreateMeal}>
-                  <Plus className="size-4" />
-                  Add Menu Item
-                </Button>
-              </div>
-
-              {meals.length === 0 ? (
-                <Card className="border-dashed">
-                  <p className="text-sm text-slate-600">No menu items yet. Create your first meal.</p>
-                </Card>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {meals.map((meal) => (
-                    <article key={meal.id} className="rounded-xl border border-slate-200 p-4">
-                      <h3 className="text-lg">{meal.title ?? meal.name ?? "Untitled Meal"}</h3>
-                      <p className="mt-1 text-sm text-slate-600 line-clamp-2">
-                        {meal.description ?? "No description provided."}
-                      </p>
-                      <p className="mt-2 text-sm font-medium text-emerald-700">
-                        ${Number(meal.price ?? 0).toFixed(2)}
-                      </p>
-                      <div className="mt-3 flex gap-2">
-                        <Button size="sm" variant="secondary" onClick={() => openEditMeal(meal)}>
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => setDeletingMeal(meal)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </Card>
+      
           </>
         )}
 

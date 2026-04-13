@@ -176,6 +176,7 @@ export default function RegisterPage() {
             <Button
               type="button"
               variant="outline"
+              className="w-full"
               onClick={() => {
                 loginWithGoogle().catch((error) =>
                   toast.error(error instanceof Error ? error.message : "Google signup failed"),

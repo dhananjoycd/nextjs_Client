@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, ShoppingBag, UserCircle2 } from "lucide-react";
+import { ChevronDown, LogOut, Menu, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   Button,
@@ -24,28 +24,56 @@ import { cn } from "@/lib/utils";
 
 const primaryLinks = [
   { href: routes.home, label: "Home" },
+  { href: "/categories", label: "Categories" },
   { href: routes.meals, label: "Meals" },
   { href: routes.providers, label: "Providers" },
-  { href: routes.about, label: "About" },
-  { href: routes.contact, label: "Contact" },
 ];
 
-const pagesLinks = [
+const exploreLinks = [
+  { href: routes.about, label: "About" },
+  { href: routes.contact, label: "Contact" },
+  { href: "/faq", label: "FAQ" },
+];
+
+const policyLinks = [
   { href: routes.privacy, label: "Privacy Policy" },
   { href: routes.terms, label: "Terms of Service" },
 ];
 
-const customerLinks = [
-  { href: routes.cart, label: "Cart" },
-  { href: routes.customerOrders, label: "Orders" },
-  { href: routes.customerProfile, label: "Profile" },
-];
+type RoleKey = "CUSTOMER" | "PROVIDER" | "ADMIN";
 
-function getAccountMenuLink(role?: string) {
-  if (role === "CUSTOMER") return { href: routes.customerProfile, label: "My Profile" };
-  if (role === "PROVIDER") return { href: routes.providerDashboard, label: "Provider Dashboard" };
-  if (role === "ADMIN") return { href: routes.adminDashboard, label: "Admin Dashboard" };
-  return null;
+const roleFeatureLinks: Record<RoleKey, { href: string; label: string }[]> = {
+  CUSTOMER: [
+    { href: routes.customerDashboard, label: "Dashboard" },
+    { href: routes.cart, label: "Cart" },
+    { href: routes.customerOrders, label: "My Orders" },
+    { href: routes.customerWishlist, label: "Wishlist" },
+    { href: routes.customerProfile, label: "Profile Settings" },
+  ],
+  PROVIDER: [
+    { href: routes.providerDashboard, label: "Dashboard" },
+    { href: "/dashboard/provider/meals", label: "Manage Meals" },
+    { href: "/dashboard/provider/orders", label: "Order Queue" },
+    { href: "/dashboard/provider/earnings", label: "Earnings" },
+    { href: "/dashboard/provider/profile", label: "Business Profile" },
+  ],
+  ADMIN: [
+    { href: routes.adminDashboard, label: "Admin Overview" },
+    { href: "/dashboard/admin/users", label: "Users" },
+    { href: "/dashboard/admin/providers", label: "Providers" },
+    { href: "/dashboard/admin/meals", label: "Meals" },
+    { href: "/dashboard/admin/orders", label: "Orders" },
+    { href: "/dashboard/admin/reviews", label: "Reviews" },
+    { href: "/dashboard/admin/settings", label: "Settings" },
+    { href: "/dashboard/admin/audit-logs", label: "Audit Logs" },
+  ],
+};
+
+function getRoleFeatureLinks(role?: string) {
+  if (role === "CUSTOMER") return roleFeatureLinks.CUSTOMER;
+  if (role === "PROVIDER") return roleFeatureLinks.PROVIDER;
+  if (role === "ADMIN") return roleFeatureLinks.ADMIN;
+  return [];
 }
 
 function isLinkActive(pathname: string, href: string) {
@@ -75,10 +103,9 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const accountMenuLink = getAccountMenuLink(user?.role);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 14);
@@ -87,26 +114,21 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const roleLinks = useMemo(() => {
-    if (user?.role === "CUSTOMER") return customerLinks;
-    if (user?.role === "PROVIDER") return [{ href: routes.providerDashboard, label: "Provider Dashboard" }];
-    if (user?.role === "ADMIN") return [{ href: routes.adminDashboard, label: "Admin Dashboard" }];
-    return [];
-  }, [user?.role]);
+  const roleLinks = useMemo(() => getRoleFeatureLinks(user?.role), [user?.role]);
+  const roleHome = useMemo(() => getRoleHomePath(user?.role), [user?.role]);
 
-  const quickActionHref = user ? getRoleHomePath(user.role) : routes.register;
-  const quickActionLabel = user ? (user.role === "ADMIN" ? "Admin dashboard" : user.role === "PROVIDER" ? "Provider dashboard" : "Open dashboard") : "Start ordering";
+  const initial = user?.name?.trim().charAt(0).toUpperCase() || "U";
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 transition-all duration-300",
+        "sticky top-0 z-50 transition-all duration-300",
         scrolled
-          ? "border-b border-white/60 bg-white/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
-          : "bg-white/40 backdrop-blur-xl",
+          ? "border-b border-white/60 bg-white/75 shadow-[0_16px_45px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
+          : "bg-white/55 backdrop-blur-xl",
       )}
     >
-      <nav className="mx-auto flex min-h-[74px] max-w-[1280px] items-center gap-3 px-4 py-3 sm:px-5 lg:px-6">
+      <nav className="mx-auto flex min-h-19 max-w-7xl items-center gap-3 px-4 py-3 sm:px-5 lg:px-6">
         <Link href={routes.home} className="inline-flex shrink-0 items-center gap-3 text-lg font-bold">
           <span className="inline-flex size-9 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm ring-1 ring-slate-900/10">
             <ShoppingBag className="size-4" />
@@ -120,84 +142,99 @@ export function Navbar() {
         </Link>
 
         <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
-          <div className="flex w-full max-w-3xl items-center justify-center gap-5 overflow-x-auto rounded-full border border-white/60 bg-white/60 px-4 py-3 shadow-[0_8px_30px_rgba(15,23,42,0.05)] backdrop-blur-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {primaryLinks.map((link) => (
-            <div className="group" key={link.href}>
-              <NavLink href={link.href} label={link.label} active={isLinkActive(pathname, link.href)} />
-            </div>
-          ))}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded-full bg-transparent p-0 text-sm font-medium text-slate-700 outline-none transition-colors hover:text-slate-900 focus-visible:ring-0"
-              >
-                More <ChevronDown className="size-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-64 rounded-2xl border-white/70 bg-white/90 backdrop-blur-xl">
-              <DropdownMenuLabel>Explore More Pages</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {pagesLinks.map((link) => (
-                <DropdownMenuItem key={link.href} asChild>
-                  <Link href={link.href}>{link.label}</Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex w-full max-w-3xl items-center justify-center gap-5 rounded-full border border-slate-200/80 bg-white/85 px-5 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+            {primaryLinks.map((link) => (
+              <div className="group" key={link.href}>
+                <NavLink href={link.href} label={link.label} active={isLinkActive(pathname, link.href)} />
+              </div>
+            ))}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-900"
+                >
+                  More <ChevronDown className="size-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-64 rounded-2xl border-white/70 bg-white/95 backdrop-blur-xl">
+                <DropdownMenuLabel>Explore</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {exploreLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link href={link.href}>{link.label}</Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                {policyLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link href={link.href}>{link.label}</Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
-          {!user ? (
+          {!loading && !user ? (
             <>
               <Button asChild variant="ghost" size="sm" className="rounded-full px-4 text-slate-700 hover:bg-white/70">
                 <Link href={routes.login}>Login</Link>
               </Button>
-              <Button asChild size="sm" className="rounded-full px-4 shadow-sm lg:px-5">
+              <Button asChild size="sm" className="rounded-full px-5 shadow-sm">
                 <Link href={routes.register}>Get Started</Link>
               </Button>
             </>
-          ) : (
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full border border-white/65 bg-white/70 px-2.5 shadow-sm hover:bg-white"
+                  className="rounded-full border border-white/65 bg-white/85 px-2.5 shadow-sm hover:bg-white"
                   aria-label="Open account menu"
                 >
-                  <span className="inline-flex size-7 items-center justify-center rounded-full bg-slate-900 text-white">
-                    <UserCircle2 className="size-4" />
+                  <span className="inline-flex size-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
+                    {initial}
                   </span>
-                  <span className="hidden max-w-[140px] truncate text-sm font-medium text-slate-700 lg:block">
+                  <span className="hidden max-w-40 truncate text-sm font-medium text-slate-700 lg:block">
                     {user.name}
                   </span>
-                  <ChevronDown className="size-4 text-slate-500" />
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    {user.role}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-2xl border-white/70 bg-white/90 backdrop-blur-xl">
-                <DropdownMenuLabel className="space-y-0.5">
-                  <p className="font-medium text-slate-900">{user.name}</p>
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">{user.role}</p>
+              <DropdownMenuContent align="end" className="w-72 rounded-2xl border-white/70 bg-white/95 p-1.5 backdrop-blur-xl">
+                <DropdownMenuLabel className="space-y-1 rounded-xl bg-slate-50 px-3 py-2.5">
+                  <p className="truncate text-sm font-semibold text-slate-900">{user.name}</p>
+                  <p className="truncate text-xs text-slate-600">{user.email}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {accountMenuLink && (
-                  <DropdownMenuItem asChild>
-                    <Link href={accountMenuLink.href}>{accountMenuLink.label}</Link>
+
+                {roleLinks.slice(0, 6).map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link href={link.href}>
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
-                )}
+                ))}
+
                 <DropdownMenuSeparator />
+        
                 <DropdownMenuItem onClick={logout} className="text-rose-600 focus:text-rose-600">
+                  <LogOut className="mr-2 size-4" />
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          ) : null}
         </div>
 
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild className="md:hidden">
+          <SheetTrigger asChild className="ml-auto md:hidden lg:hidden">
             <Button
               size="icon"
               variant="secondary"
@@ -211,7 +248,7 @@ export function Navbar() {
             <SheetTitle>Menu</SheetTitle>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                {user ? "Signed in" : "Guest browsing"}
+                {user ? user.role : "Guest browsing"}
               </p>
               <p className="mt-2 text-lg font-semibold text-slate-900">
                 {user?.name ?? "Discover your next meal"}
@@ -241,10 +278,11 @@ export function Navbar() {
                   ))}
                 </div>
               </div>
+
               <div className="space-y-2">
-                <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Company</p>
+                <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Explore</p>
                 <div className="flex flex-col gap-2">
-                  {pagesLinks.map((link) => (
+                  {exploreLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -261,11 +299,31 @@ export function Navbar() {
                   ))}
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Policies</p>
+                <div className="flex flex-col gap-2">
+                  {policyLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "rounded-lg px-3 py-2.5 text-sm font-medium",
+                        isLinkActive(pathname, link.href)
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
               {roleLinks.length > 0 && (
                 <div className="space-y-2">
-                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    {user?.role === "CUSTOMER" ? "My Account" : user?.role}
-                  </p>
+                  <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Role Features</p>
                   <div className="flex flex-col gap-2">
                     {roleLinks.map((link) => (
                       <Link
@@ -287,20 +345,6 @@ export function Navbar() {
               )}
             </div>
             <div className="space-y-2 border-t border-slate-200 pt-4">
-              {user && accountMenuLink && (
-                <Button asChild variant="outline" className="w-full">
-                  <Link href={accountMenuLink.href} onClick={() => setMobileMenuOpen(false)}>
-                    {accountMenuLink.label}
-                  </Link>
-                </Button>
-              )}
-              {!user && (
-                <Button asChild variant="outline" className="w-full">
-                  <Link href={quickActionHref} onClick={() => setMobileMenuOpen(false)}>
-                    {quickActionLabel}
-                  </Link>
-                </Button>
-              )}
               {!user ? (
                 <>
                   <Button asChild variant="secondary" className="w-full">
@@ -315,16 +359,23 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    logout();
-                  }}
-                >
-                  Logout
-                </Button>
+                <>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href={roleHome} onClick={() => setMobileMenuOpen(false)}>
+                      {user.role === "ADMIN" ? "Admin Panel" : user.role === "PROVIDER" ? "Provider Panel" : "My Dashboard"}
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout();
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
               )}
             </div>
           </SheetContent>

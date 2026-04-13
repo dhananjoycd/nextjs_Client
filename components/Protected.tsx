@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { getRoleHomePath } from "@/lib/auth";
+import { getRoleHomePath, normalizeRole } from "@/lib/auth";
 import { routes } from "@/lib/routes";
 
 type Props = {
@@ -14,6 +14,8 @@ type Props = {
 export function Protected({ children, roles }: Props) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const userRole = normalizeRole(user?.role);
+  const allowedRoles = roles?.map((role) => String(role).toUpperCase());
 
   useEffect(() => {
     if (loading) return;
@@ -21,12 +23,12 @@ export function Protected({ children, roles }: Props) {
       router.replace(routes.login);
       return;
     }
-    if (roles?.length && !roles.includes(user.role)) {
-      router.replace(getRoleHomePath(user.role));
+    if (allowedRoles?.length && !allowedRoles.includes(userRole)) {
+      router.replace(getRoleHomePath(userRole));
     }
-  }, [user, loading, roles, router]);
+  }, [allowedRoles, loading, router, user, userRole]);
 
   if (loading || !user) return <p>Loading...</p>;
-  if (roles?.length && !roles.includes(user.role)) return <p>Checking access...</p>;
+  if (allowedRoles?.length && !allowedRoles.includes(userRole)) return <p>Checking access...</p>;
   return <>{children}</>;
 }
