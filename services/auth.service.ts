@@ -33,8 +33,9 @@ export const authService = {
       skipAuthHandling: options?.skipAuthHandling,
     });
   },
-  session(options?: { skipAuthHandling?: boolean }) {
+  session(options?: { skipAuthHandling?: boolean; token?: string | null }) {
     return apiRequest<User>("/api/v1/auth/me", {
+      ...(options?.token ? { token: options.token } : {}),
       skipAuthHandling: options?.skipAuthHandling,
     });
   },
@@ -46,10 +47,13 @@ export const authService = {
     });
   },
   googleLogin(callbackURL: string) {
-    return apiRequest<{ url: string; redirect: boolean }>("/api/v1/auth/google-login", {
-      method: "POST",
-      body: JSON.stringify({ callbackURL }),
-      skipAuthHandling: true,
-    });
+    return apiRequest<{ url: string; redirect: boolean }>(
+      "/api/v1/auth/google",
+      {
+        method: "POST",
+        body: JSON.stringify({ callbackURL }),
+        skipAuthHandling: true,
+      },
+    );
   },
 };

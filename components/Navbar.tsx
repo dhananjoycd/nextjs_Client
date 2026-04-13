@@ -25,12 +25,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+} from "@/components/ui";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui";
+} from "@/components/ui/sheet";
 import { getRoleHomePath, normalizeRole } from "@/lib/auth";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";

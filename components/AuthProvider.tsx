@@ -28,6 +28,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const USER_KEY = "foodhub_user";
+const TOKEN_KEY = "foodhub_token";
 
 function normalizeUser(input: unknown): User | null {
   if (!input || typeof input !== "object") return null;
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearAuthState = useCallback(() => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("foodhub_token");
+    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   }, []);
 
@@ -72,7 +73,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const hydrateSession = async () => {
       const savedUser = localStorage.getItem(USER_KEY);
-      localStorage.removeItem("foodhub_token");
+      const savedToken = localStorage.getItem(TOKEN_KEY);
+
+      if (savedToken && active) {
+        setToken(savedToken);
+      }
 
       if (savedUser && active) {
         try {
@@ -89,7 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const me = await authService.session({ skipAuthHandling: true });
+        const me = await authService.session({
+          token: savedToken,
+          skipAuthHandling: true,
+        });
         if (!active) return;
         const normalized = normalizeUser(me);
         if (normalized) {
@@ -102,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         if (!active) return;
         setUser(null);
+        setToken(null);
+        localStorage.removeItem(TOKEN_KEY);
       } finally {
         if (active) {
           setLoading(false);
@@ -143,7 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Could not read user profile from login response");
     }
     setToken(accessToken ?? null);
-    localStorage.removeItem("foodhub_token");
+    if (accessToken) {
+      localStorage.setItem(TOKEN_KEY, accessToken);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
     setUser(nextUser);
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
     return nextUser;
@@ -173,18 +187,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshMe = useCallback(async () => {
     try {
-      const me = await authService.session({ skipAuthHandling: true });
+      const savedToken =
+        token ?? (typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null);
+      const me = await authService.session({
+        token: savedToken,
+        skipAuthHandling: true,
+      });
       const normalized = normalizeUser(me);
       if (!normalized) {
         throw new Error("Invalid session user");
       }
+      setToken(savedToken ?? null);
       setUser(normalized);
       localStorage.setItem(USER_KEY, JSON.stringify(normalized));
     } catch {
       clearAuthState();
       throw new Error("Session refresh failed");
     }
-  }, [clearAuthState]);
+  }, [clearAuthState, token]);
 
   const value = useMemo(
     () => ({ user, token, loading, login, register, logout, loginWithGoogle, refreshMe }),
